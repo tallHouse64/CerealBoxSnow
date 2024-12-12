@@ -52,6 +52,17 @@ int updatePhysics(){
             prts[i].x -= 10;
         };
 
+        //If the particle is off the left teleport it to the right
+        if(prts[i].x < -prtW){
+            prts[i].x += out->w;
+        };
+
+        //If the particle is off the right teleprt it to the left
+        if(prts[i].x >= out->w){
+            prts[i].x -= out->w;
+        };
+
+        //If the partic is off the bottom then teleport it to the top
         if(prts[i].y >= out->h){
             prts[i].y = -prtH;
         };
