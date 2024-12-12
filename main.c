@@ -5,7 +5,7 @@
 #include"sdltod/tod.h"
 
 #define DELAY 1000/30
-#define MAX_PRTS 1
+#define MAX_PRTS 1024
 
 struct prt_t{
     int x, y;
@@ -14,7 +14,7 @@ struct prt_t{
 D_Surf * out = D_NULL;
 D_Event e;
 int running = 1;
-int prtsInUse = 1;
+int prtsInUse = 10;
 int prtW = 10;
 int prtH = 10;
 D_Point mouse = {0};
