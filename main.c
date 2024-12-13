@@ -40,6 +40,8 @@ int draw(){
         r.x = prts[i].x;
         r.y = prts[i].y;
         D_FillRect(out, &r, D_rgbaToFormat(out->format, 255, 255, 255, 255));
+        r.w = prtW;
+        r.h = prtH;
         i++;
     };
 
