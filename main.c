@@ -28,7 +28,7 @@ int rng(){
     //make sure number is not repeating odd, even, odd, even, odd, even
     /*if(n % 32368 == 0){
      *      n += 8;
-};*/
+    */
 };
 
 int draw(){
@@ -83,8 +83,8 @@ int main(){
 
     int i = 0;
     while(i < prtsInUse){
-        prts[i].x = 10;//rng() % out->w;
-        prts[i].y = 10;//-(rng() % 60);
+        prts[i].x = rng() % out->w;
+        prts[i].y = -(rng() % out->h);
         i++;
     };
 
