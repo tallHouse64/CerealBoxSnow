@@ -51,7 +51,8 @@ int updatePhysics(){
     int dir = 0;
     while(i < prtsInUse){
 
-        prts[i].y += 10;
+        prts[i].y += (rng() % 10) + 5;
+
         if((rng() % 2) == 1){
             prts[i].x += 10;
         }else{
