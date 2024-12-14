@@ -31,6 +31,12 @@ int rng(){
     */
 };
 
+int drawPrtSlider(){
+    D_Rect s = {out->w - 20, out->h - 110, 10, 100};
+
+    D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
+};
+
 int draw(){
     D_FillRect(out, D_NULL, D_rgbaToFormat(out->format, 20, 20, 20, 255));
 
@@ -45,7 +51,6 @@ int draw(){
         i++;
     };
 
-    D_FlipOutSurf(out);
 };
 
 int updatePhysics(){
@@ -111,6 +116,9 @@ int main(){
         updatePhysics();
 
         draw();
+        drawPrtSlider();
+
+        D_FlipOutSurf(out);
 
         D_Delay(DELAY);
     };
