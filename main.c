@@ -17,7 +17,7 @@ int running = 1;
 int prtsInUse = 100;
 int prtW = 10;
 int prtH = 10;
-int mouseDown = 0; //0 or 1, don't have bool, only updated on mouseup and mousedown
+int mousePressed = 0; //Only 1 on the same frame mouse down happened, otherwise 0
 D_Point mouse = {0};
 
 //Linear congruential generator (almost)
@@ -36,6 +36,10 @@ int drawPrtSlider(){
     D_Rect s = {out->w - 20, out->h - 110, 10, 100};
 
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
+
+    /*if(D_PointInRect(&mouse, &s) && mouseDown){
+        printf("Slider pressed\n");
+    };*/
 };
 
 int draw(){
@@ -100,6 +104,7 @@ int main(){
 
     while(running){
         D_PumpEvents();
+        mousePressed = 0;
 
         while(D_GetEvent(&e) != -1){
             switch(e.type){
@@ -110,11 +115,7 @@ int main(){
                     break;
 
                 case D_MOUSEDOWN:
-                    mouseDown = 1;
-                    break;
-
-                case D_MOUSEUP:
-                    mouseDown = 0;
+                    mousePressed = 1;
                     break;
 
                 case D_QUIT:
@@ -125,7 +126,7 @@ int main(){
 
         };
 
-        printf("mouseDown: %d\n", mouseDown);
+        printf("mousePressed: %d\n", mousePressed);
 
         updatePhysics();
 
