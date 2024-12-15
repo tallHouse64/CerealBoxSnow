@@ -17,6 +17,7 @@ int running = 1;
 int prtsInUse = 100;
 int prtW = 10;
 int prtH = 10;
+int mouseDown = 0; //0 or 1, don't have bool, only updated on mouseup and mousedown
 D_Point mouse = {0};
 
 //Linear congruential generator (almost)
@@ -102,16 +103,29 @@ int main(){
 
         while(D_GetEvent(&e) != -1){
             switch(e.type){
+
                 case D_MOUSEMOVE:
                     mouse.x = e.mouse.x;
                     mouse.y = e.mouse.y;
                     break;
+
+                case D_MOUSEDOWN:
+                    mouseDown = 1;
+                    break;
+
+                case D_MOUSEUP:
+                    mouseDown = 0;
+                    break;
+
                 case D_QUIT:
                     running = 0;
                     break;
+
             };
 
         };
+
+        printf("mouseDown: %d\n", mouseDown);
 
         updatePhysics();
 
