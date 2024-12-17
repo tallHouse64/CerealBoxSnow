@@ -33,14 +33,14 @@ int rng(){
 };
 
 int drawPrtSlider(){
-    D_Rect s = {out->w - 20, out->h - 110, 10, 100};
+    D_Rect s = {out->w - 20, out->h - 210, 10, 200};
 
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
 
     if(D_PointInRect(&mouse, &s) && mousePressed){
-        //The number (mouse.y - s.y) is assumed to be between 0 and 99
+        //The number (mouse.y - s.y) is assumed to be between 0 and 199
 
-        prtsInUse = (mouse.y - s.y) * (MAX_PRTS / 100);
+        prtsInUse = (((mouse.y - s.y) * MAX_PRTS) / (s.h - 1));
         printf("prtsInUse: %d\n", prtsInUse);
     };
 };
