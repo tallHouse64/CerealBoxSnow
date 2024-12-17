@@ -33,6 +33,7 @@ int rng(){
 };
 
 int drawPrtSlider(){
+    //s for the slider itself
     D_Rect s = {out->w - 20, out->h - 210, 10, 200};
 
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
@@ -43,6 +44,14 @@ int drawPrtSlider(){
         prtsInUse = (((mouse.y - s.y) * MAX_PRTS) / (s.h - 1));
         printf("prtsInUse: %d\n", prtsInUse);
     };
+
+
+    //The box is the slider handle
+    D_Rect box = {s.x, 0, s.w, s.w};
+
+    //(prtsInUse / MAX_PRTS) * (s.h / 1)
+    box.y = (s.y + ((prtsInUse * s.h) / MAX_PRTS)) - (box.h / 2);
+    D_FillRect(out, &box, D_rgbaToFormat(out->format, 200, 170, 160, 255));
 };
 
 int draw(){
