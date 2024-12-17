@@ -146,7 +146,10 @@ int main(){
         updatePhysics();
 
         draw();
-        drawPrtSlider();
+
+        if(framesSinceMouseEvent < framesTillUiHide){
+            drawPrtSlider();
+        };
 
         D_FlipOutSurf(out);
 
