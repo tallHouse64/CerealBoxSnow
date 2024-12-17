@@ -42,7 +42,7 @@ int drawPrtSlider(){
         //The number (mouse.y - s.y) is assumed to be between 0 and 199
 
         prtsInUse = (((mouse.y - s.y) * MAX_PRTS) / (s.h - 1));
-        printf("prtsInUse: %d\n", prtsInUse);
+        //printf("prtsInUse: %d\n", prtsInUse);
     };
 
 
