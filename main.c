@@ -19,7 +19,7 @@ int prtW = 10;
 int prtH = 10;
 int mousePressed = 0; //Only 1 on the same frame mouse down happened, otherwise 0
 D_Point mouse = {0};
-int framesTillUiHide = 45; //About 1.5 sec
+int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
 
 //Linear congruential generator (almost)
