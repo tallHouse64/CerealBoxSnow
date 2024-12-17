@@ -37,9 +37,12 @@ int drawPrtSlider(){
 
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
 
-    /*if(D_PointInRect(&mouse, &s) && mouseDown){
-        printf("Slider pressed\n");
-    };*/
+    if(D_PointInRect(&mouse, &s) && mousePressed){
+        //The number (mouse.y - s.y) is assumed to be between 0 and 99
+
+        prtsInUse = (mouse.y - s.y) * (MAX_PRTS / 100);
+        printf("prtsInUse: %d\n", prtsInUse);
+    };
 };
 
 int draw(){
@@ -94,7 +97,7 @@ int main(){
     out = D_GetOutSurf(50, 50, 640, 480, "Snow Sim");
 
     int i = 0;
-    while(i < prtsInUse){
+    while(i < MAX_PRTS){
         prts[i].x = rng() % out->w;
         prts[i].y = -(rng() % out->h);
         i++;
@@ -125,8 +128,6 @@ int main(){
             };
 
         };
-
-        printf("mousePressed: %d\n", mousePressed);
 
         updatePhysics();
 
