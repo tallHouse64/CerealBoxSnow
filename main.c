@@ -19,6 +19,8 @@ int prtW = 10;
 int prtH = 10;
 int mousePressed = 0; //Only 1 on the same frame mouse down happened, otherwise 0
 D_Point mouse = {0};
+int framesTillUiHide = 45; //About 1.5 sec
+int framesSinceMouseEvent = 0;
 
 //Linear congruential generator (almost)
 int rng(){
@@ -117,6 +119,7 @@ int main(){
     while(running){
         D_PumpEvents();
         mousePressed = 0;
+        framesSinceMouseEvent++;
 
         while(D_GetEvent(&e) != -1){
             switch(e.type){
@@ -124,10 +127,12 @@ int main(){
                 case D_MOUSEMOVE:
                     mouse.x = e.mouse.x;
                     mouse.y = e.mouse.y;
+                    framesSinceMouseEvent = 0;
                     break;
 
                 case D_MOUSEDOWN:
                     mousePressed = 1;
+                    framesSinceMouseEvent = 0;
                     break;
 
                 case D_QUIT:
