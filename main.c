@@ -105,7 +105,7 @@ int updatePhysics(){
 
 int main(){
 
-    out = D_GetOutSurf(50, 50, 640, 480, "Snow Sim");
+    out = D_GetOutSurf(50, 50, 640, 480, "Snoweth");
 
     int i = 0;
     while(i < MAX_PRTS){
