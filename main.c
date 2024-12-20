@@ -105,7 +105,7 @@ int updatePhysics(){
 
 int main(){
 
-    out = D_GetOutSurf(50, 50, 640, 480, "Snoweth");
+    out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow");
 
     int i = 0;
     while(i < MAX_PRTS){
