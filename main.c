@@ -17,7 +17,7 @@ int running = 1;
 int prtsInUse = 100;
 int prtW = 10;
 int prtH = 10;
-int mousePressed = 0; //Only 1 on the same frame mouse down happened, otherwise 0
+int mouseDown = 0; //This is mouse button state
 D_Point mouse = {0};
 int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
@@ -40,7 +40,7 @@ int drawPrtSlider(){
 
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
 
-    if(D_PointInRect(&mouse, &s) && mousePressed){
+    if(D_PointInRect(&mouse, &s) && mouseDown){
         //The number (mouse.y - s.y) is assumed to be between 0 and 199
 
         prtsInUse = (((mouse.y - s.y) * MAX_PRTS) / (s.h - 1));
@@ -118,7 +118,6 @@ int main(){
 
     while(running){
         D_PumpEvents();
-        mousePressed = 0;
         framesSinceMouseEvent++;
 
         while(D_GetEvent(&e) != -1){
@@ -131,7 +130,12 @@ int main(){
                     break;
 
                 case D_MOUSEUP:
-                    mousePressed = 1;
+                    mouseDown = 0;
+                    framesSinceMouseEvent = 0;
+                    break;
+
+                case D_MOUSEDOWN:
+                    mouseDown = 1;
                     framesSinceMouseEvent = 0;
                     break;
 
