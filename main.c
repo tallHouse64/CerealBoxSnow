@@ -130,7 +130,7 @@ int main(){
                     framesSinceMouseEvent = 0;
                     break;
 
-                case D_MOUSEDOWN:
+                case D_MOUSEUP:
                     mousePressed = 1;
                     framesSinceMouseEvent = 0;
                     break;
