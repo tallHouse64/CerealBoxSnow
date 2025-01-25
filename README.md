@@ -3,6 +3,10 @@ This is just a snow sim I wanted to make, it is pixel art style snow in 2D. The 
 I could watch it for hours.
 I also wanted to release it in time for Christmas and 20th December is ok. Merry Christmas btw.
 
+## Screenshots
+<img src="https://github.com/tallHouse64/CerealBoxSnow/blob/main/screenshot1.png?raw=true" width="428" alt="A screenshot of Cerial Box Snow working."/>
+<img src="https://github.com/tallHouse64/CerealBoxSnow/blob/main/screenshot2.png?raw=true" width="428" alt="Another screenshot of Cerial Box Snow working."/>
+
 ## Features
 So far it has one, a slider to choose how many snow particles are used.
 
