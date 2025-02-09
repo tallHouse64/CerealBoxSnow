@@ -6,18 +6,19 @@
  *
  * The purpose of this lib is to make gmaes/programs
  *  that are very cross platform. As much as possible.
- *  Think Windows, Mac, Linux, NDS, GBA, WII, TI calcs,
- *  IPOD, PSP. I want it to be the most cross platform
+ *  Think Windows, Mac, Linux, NDS, TI calcs,
+ *  IPOD, PSP. Only Windows and Linux are tested and
+ *  work so far. I want it to be the most cross platform
  *  library ever because I want to make games that
  *  anyone can play no matter what device they have.
- *  This is why the library (at least mostly) is a
- *  single file and has as few dependancies as
+ *  This is why the library is not many single header
+ *  files and has as few dependancies as
  *  possible, I also have chosen to make it possible
  *  to remove all dependancies using C defines,
  *  including the C stadard library (you can give your
  *  own calloc and free for this library to use).
- *  Also it would be great to make a game engin with
- *  this library, even better if the engin itself
+ *  Also it would be great to make a game engine with
+ *  this library, even better if the engine itself
  *  runs on the library and works on everything it
  *  supports. Imagine making a real game for PC on DS!
  *  I want to do that as a joke, (making a PC game on
@@ -48,7 +49,7 @@
  *  to use instead. You would also have to define
  *  D_FREE as something equivalent.
  *
- * Limitations, this library only stores pixel data
+ * Limitations, this library only supports bit depth
  *  in sizes that are 8, 16 and 32 bits. If you want
  *  24 you just have to use 32 and ignore the other 8.
  *  When you use D_FindPixForm() you can give it
@@ -125,6 +126,25 @@
 #define D_BITDEPTHTOBYTES(bitDepth) ((bitDepth) > 32) ? -1 : (((bitDepth) > 16) ? 4 : (((bitDepth) > 8) ? 2 : ((bitDepth) > 0) ? 1 : -2 ))
 //                                                                            32bits                  16bits                 8bi
 
+/* D_OutSurfFlags are used to store qualities of
+ *  a surface used for output like weather it's
+ *  fullscreen. Bitwise OR "|" can be used to
+ *  combine flags like
+ *  "D_OUTSURFRESIZABLE | D_OUTSURFFULLSCREEN".
+ */
+typedef enum D_OutSurfFlags {
+    D_OUTSURFRESIZABLE = 0x01,
+    D_OUTSURFFULLSCREEN = 0x02
+} D_OutSurfFlags;
+
+/* D_BLENDMODE flags are used to store how a
+ *  source surface should be copied to another.
+ *  It can be used to enable and disable alpha
+ *  blending on a surface.
+ *
+ * If you don't know which one to use, you
+ *  probably want D_BLENDMODE_NORMAL.
+ */
 typedef enum D_BLENDMODE {
     D_BLENDMODE_NONE = 0,
     D_BLENDMODE_NORMAL
@@ -173,13 +193,15 @@ typedef struct D_Surf {
     int w, h;
     int outId;
     D_BLENDMODE blendMode;
+    D_OutSurfFlags outSurfFlags;
     D_PixFormat format;
 } D_Surf;
 
-//function protot
+//function prototypes
 
 //If you want to see the comments for each function to thair implementations
 
+int D_PointInRect(D_Point * p, D_Rect * r);
 int D_GetMaskShift(D_uint32 m);
 int D_GetMaskLen(D_uint32 m);
 D_PixFormat D_FindPixFormat(D_uint32 rMask, D_uint32 gMask, D_uint32 bMask, D_uint32 aMask, int bitDepth);
@@ -192,10 +214,13 @@ D_Surf * D_CreateSurf(int w, int h, D_PixFormat format);
 int D_FreeSurf(D_Surf * s);
 int D_BlendNone(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a);
 int D_BlendNormal(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a);
-D_uint32 D_rgbaToABGR8888(int r, int g, int b, int a);
 int D_ClipRect(int x, int y, int w, int h, D_Rect * inner);
 int D_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col);
 int D_SurfCopyScale(D_Surf * s1, D_Rect * r1, D_Surf * s2, D_Rect * r2);
+int D_CharToMap(char c, int * x, int * y);
+int D_PrintToSurf(D_Surf * s, D_Surf * font, D_Point * p, int height, int extraSpacing, char * t);
+int D_FindExtremePoints(D_Point * p, int numPoints, int * highest, int * lowest);
+int D_LineFindY(D_Point * a, D_Point * b, int x, int * y);
 #ifdef D_ALLOW_STB_IMAGE
 D_Surf * D_LoadImage(char * path);
 #endif
@@ -205,6 +230,8 @@ D_Surf * D_LoadImage(char * path);
 
 //function defs
 #ifdef D_IMPLEMENTATION
+#ifndef D_ALREADY_IMPLEMENTED
+#define D_ALREADY_IMPLEMENTED
 
 /* This checks if a point is in a rectangle and returns 1
  *  if it is, otherwise it returns 0. If p or r are null
@@ -429,27 +456,36 @@ D_uint32 D_rgbaToFormat(D_PixFormat f, int r, int g, int b, int a){
     return D_RawrgbaToFormat(f, (r * (f.rMask >> f.rMaskShift)) / (255), (g * (f.gMask >> f.gMaskShift)) / (255), (b * (f.bMask >> f.bMaskShift)) / (255), (a * (f.aMask >> f.aMaskShift)) / (255));
 };
 
-/* Unless you know what
- *  this does, you probabl need D_FormatTorgba().
+/* Unless you know what this does, you probably
+ *  need D_FormatTorgba().
  *
- * This does the opposite of D_RawrgbaToFormat(), it
- *  takes in a pixel p and it's format f, then it finds
- *  it's raw rgba colour but not in 0-255 form, instead
- *  it's in the pixel format's form. For example in
- *  "ABBB BBGG GGGR RRRR" format r, g and b would be 0-31
- *  and a would be 0-1. This is where D_FormatTorgba() is
- *  different, it converts these numbers to 0-255 instead.
+ * This does the opposite of D_RawrgbaToFormat(),
+ *  it takes in a pixel p and it's format f, then
+ *  it finds it's raw rgba colour but not in
+ *  0-255 form, instead it's in the pixel
+ *  format's form. For example in "ABBB BBGG GGGR
+ *  RRRR" format r, g and b would be 0-31 and a
+ *  would be 0-1. This is where D_FormatTorgba()
+ *  is different, it converts these numbers to
+ *  0-255 instead.
  *
- * Remember, if a pixel format you put in this function has
- *  0 for an alpa mask, a would always be 0 and may be
- *  invisab. (0 for rgb masks would do a similar thing).
+ * Remember, if a pixel format you put in this
+ *  function has 0 for an alpa mask, a would
+ *  always be 0 and may be invisab. (0 for rgb
+ *  masks would do a similar thing).
  *
  * p: The pixel. (You can take it from a surf)
- * f: The format of the pixel (usually surf->format)
- * r: A pointer to fill in with red part of the colour 0-?. Format dependant.
- * g: A pointer to fill in with green part of the colour 0-?. Format dependant.
- * b: A pointer to fill in with blue part of the colour 0-?. Format dependant.
- * a: A pointer to fill in with alpha part of the colour 0-?. Format dependant.
+ * f: The format of the pixel (usually
+ *  surf->format)
+ * r: A pointer to fill in with red part of the
+ *  colour 0-?. Format dependant (This is why you
+ *  probably want D_FormatTorgba()).
+ * g: A pointer to fill in with green part of the
+ *  colour 0-?. Format dependant.
+ * b: A pointer to fill in with blue part of the
+ *  colour 0-?. Format dependant.
+ * a: A pointer to fill in with alpha part of the
+ *  colour 0-?. Format dependant.
  */
 int D_RawFormatTorgba(D_uint32 p, D_PixFormat f, int * r, int * g, int * b, int * a){
 
@@ -584,6 +620,8 @@ D_Surf * D_CreateSurf(int w, int h, D_PixFormat format){
     s->w = w;
     s->h = h;
     s->outId = -1;
+    s->blendMode = D_BLENDMODE_NORMAL;
+    s->outSurfFlags = 0;
     s->format = format;
     return s;
 };
@@ -653,13 +691,37 @@ int D_BlendNormal(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da
     return 0;
 };
 
-/*
- * Turns a rgba colour to ABGR8888 colour format.
- * !!!!Warning, it is ABGR not RGBA!!!! Just to help you not
- *  waste time thinking it's not working when you just typed it wrong.
+/* This function blends colours using a
+ *  blendmode. The pointers r, g, b and a are
+ *  filled in with the result colour. It uses
+ *  other blend functions inside like
+ *  D_BlendNormal().
+ *
+ * blend: The blendmode to blend the colours
+ *  with.
+ * sr: Source red.
+ * sg: Source green.
+ * sb: Source blue.
+ * sa: Source alpha.
+ * dr: Destination red.
+ * dg: Destination green.
+ * db: Destination blue.
+ * da: Destination alpha.
+ * r: Filled in with result red.
+ * g: Filled in with result green.
+ * b: Filled in with result blue.
+ * a: Filled in with result alpha.
  */
-D_uint32 D_rgbaToABGR8888(int r, int g, int b, int a){
-    return ((r & 255)<<0) | ((g & 255)<<8) | ((b & 255)<<16) | ((a & 255)<<24);
+int D_Blend(D_BLENDMODE blend, int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a){
+    switch(blend){
+        case D_BLENDMODE_NONE:
+            D_BlendNone(sr, sg, sb, sa, dr, dg, db, da, r, g, b, a);
+            break;
+        case D_BLENDMODE_NORMAL:
+            D_BlendNormal(sr, sg, sb, sa, dr, dg, db, da, r, g, b, a);
+            break;
+    };
+    return 0;
 };
 
 /* Cut off any sides of an inner rect that reach out of
@@ -794,7 +856,7 @@ int D_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
 };
 
 //Used for D_SurfCopyScale(), it may change at any time.
-#define D_D_SCSPIXEL(from, to) {D_FormatTorgba((to)[(y * s2->w) + x], s2->format, &dr, &dg, &db, &da); D_FormatTorgba((from)[(((((y - r2->y) * r1->h) / r2->h) + r1->y) * s1->w) + ((((x - r2->x) * r1->w) / r2->w) + r1->x)], s1->format, &sr, &sg, &sb, &sa); D_BlendNormal(sr, sg, sb, sa, dr, dg, db, da, &r, &g, &b, &a); (to)[(y * s2->w) + x] = D_rgbaToFormat(s2->format, r, g, b, a);}
+#define D_D_SCSPIXEL(from, to) {D_FormatTorgba((to)[(y * s2->w) + x], s2->format, &dr, &dg, &db, &da); D_FormatTorgba((from)[(((((y - r2->y) * r1->h) / r2->h) + r1->y) * s1->w) + ((((x - r2->x) * r1->w) / r2->w) + r1->x)], s1->format, &sr, &sg, &sb, &sa); D_Blend(s1->blendMode, sr, sg, sb, sa, dr, dg, db, da, &r, &g, &b, &a); (to)[(y * s2->w) + x] = D_rgbaToFormat(s2->format, r, g, b, a);}
 //#define D_D_SCSPIXEL(from, to) (to)[(y * s2->w) + x] = D_ConvertPixel(s1->format, s2->format, (from)[(((((y - r2->y) * r1->h) / r2->h) + r1->y) * s1->w) + ((((x - r2->x) * r1->w) / r2->w) + r1->x)])
 
 /*
@@ -953,6 +1015,263 @@ int D_SurfCopyScale(D_Surf * s1, D_Rect * r1, D_Surf * s2, D_Rect * r2){
     return 0;
 };
 
+/* This finds the number position of where a char
+ *  is on a charicter map.
+ *
+ * The width and height of a charicter on the
+ *  font map are the same, it's the surface's
+ *  width devided by 9. font->w / 9.
+ *
+ * Also the result x and y need to be multiplied
+ *  by font->w / 9. This way they become real
+ *  coords that are the top left of the
+ *  charicter.
+ *
+ * c: The charicter.
+ * x: Gets filled in with the char x position on a font map.
+ * y: Gets filled in with the char y position on a font map.
+ * returns: 0 on sucess.
+ */
+int D_CharToMap(char c, int * x, int * y){
+    int n = -1;
+
+    switch(c){
+        case 'A': n = 0; break; case 'a': n = 27; break;
+        case 'B': n = 1; break; case 'b': n = 28; break;
+        case 'C': n = 2; break; case 'c': n = 29; break;
+        case 'D': n = 3; break; case 'd': n = 30; break;
+        case 'E': n = 4; break; case 'e': n = 31; break;
+        case 'F': n = 5; break; case 'f': n = 32; break;
+        case 'G': n = 6; break; case 'g': n = 33; break;
+        case 'H': n = 7; break; case 'h': n = 34; break;
+        case 'I': n = 8; break; case 'i': n = 35; break;
+        case 'J': n = 9; break; case 'j': n = 36; break;
+        case 'K': n = 10; break; case 'k': n = 37; break;
+        case 'L': n = 11; break; case 'l': n = 38; break;
+        case 'M': n = 12; break; case 'm': n = 39; break;
+        case 'N': n = 13; break; case 'n': n = 40; break;
+        case 'O': n = 14; break; case 'o': n = 41; break;
+        case 'P': n = 15; break; case 'p': n = 42; break;
+        case 'Q': n = 16; break; case 'q': n = 43; break;
+        case 'R': n = 17; break; case 'r': n = 44; break;
+        case 'S': n = 18; break; case 's': n = 45; break;
+        case 'T': n = 19; break; case 't': n = 46; break;
+        case 'U': n = 20; break; case 'u': n = 47; break;
+        case 'V': n = 21; break; case 'v': n = 48; break;
+        case 'W': n = 22; break; case 'w': n = 49; break;
+        case 'X': n = 23; break; case 'x': n = 50; break;
+        case 'Y': n = 24; break; case 'y': n = 51; break;
+        case 'Z': n = 25; break; case 'z': n = 52; break;
+
+        case '0': n = 54; break;
+        case '1': n = 55; break;
+        case '2': n = 56; break;
+        case '3': n = 57; break;
+        case '4': n = 58; break;
+        case '5': n = 59; break;
+        case '6': n = 60; break;
+        case '7': n = 61; break;
+        case '8': n = 62; break;
+        case '9': n = 63; break;
+
+        case '.': n = 64; break;
+        case ',': n = 65; break;
+        case ';': n = 66; break;
+        case ':': n = 67; break;
+        case '$': n = 68; break;
+        case '#': n = 69; break;
+        case '\'': n = 70; break;
+        case '!': n = 71; break;
+        case '"': n = 72; break;
+        case '/': n = 73; break;
+        case '?': n = 74; break;
+        case '%': n = 75; break;
+        case '&': n = 76; break;
+        case '(': n = 77; break;
+        case ')': n = 78; break;
+        case '@': n = 79; break;
+    };
+
+    if(n == -1){
+        return -1;
+    };
+
+    *x = n % 9;
+    *y = n / 9;
+
+    return 0;
+};
+
+/* This writes text to a surface, it is very
+ *  simple, mono-space only.
+ *
+ * The reason this text support is so simple and
+ *  doesn't use tff fonts is because it would be
+ *  too much to maintain.
+ *
+ * s: The surface to write the string t to.
+ * font: A charicter map as a surface.
+ * p: A point on surface s of where to start
+ *  writing (top left of first charicter).
+ * height: The height to draw the characters,
+ *  characters are sqaures (width == height).
+ * extraSpacing: Extra space to put between
+ *  letters, in pixels. Can be negative.
+ * t: The text, a string to write.
+ */
+int D_PrintToSurf(D_Surf * s, D_Surf * font, D_Point * p, int height, int extraSpacing, char * t){
+    int i = 0;
+    D_Rect fontRect = {0, 0, font->w / 9, font->w / 9};
+    D_Rect sRect = {p->x, p->y, height, height};
+
+    while(t[i] != '\0' && sRect.x < s->w){
+        if(D_CharToMap(t[i], &fontRect.x, &fontRect.y) < 0){
+            sRect.x += (sRect.w + extraSpacing);
+            i++;
+            continue;
+        };
+
+        fontRect.x *= fontRect.w;
+        fontRect.y *= fontRect.h;
+
+        D_SurfCopyScale(font, &fontRect, s, &sRect);
+        sRect.x += (sRect.w + extraSpacing);
+        i++;
+    };
+
+    return 0;
+};
+
+/* This function finds the heighest and lowest
+ *  points in an array of points.
+ *
+ * This function assumes that as y gets smaller,
+ *  you go up the page. A negative y means you're
+ *  above the origin.
+ *
+ * p: An array of points to find the highest and
+ *  lowest of. It is safe to pass null, but the
+ *  function would return -2.
+ * numPoints: The number of points in the array
+ *  (can aslo just be the number to test).
+ * highest: Gets filled in with the index of the
+ *  highest point (smallest y). Can be null.
+ * lowest: Gets filled in with the indes of the
+ *  lowest point (biggest y). Can be null.
+ * returns:  0 on success, negative number
+ *  otherwise.
+ */
+int D_FindExtremePoints(D_Point * p, int numPoints, int * highest, int * lowest){
+    if(p == D_NULL){
+        return -2;
+    };
+
+    if(numPoints < 1){
+        return -1;
+    };
+
+    int tempHighest;
+    if(highest == D_NULL){
+        highest = &tempHighest;
+    };
+
+    int tempLowest;
+    if(lowest == D_NULL){
+        lowest = &tempLowest;
+    };
+
+    *highest = 0;
+    *lowest = 0;
+
+    int i = 1; //1 on purpose
+
+    while(i < numPoints){
+
+        if(p[i].y < p[*highest].y){
+            *highest = i;
+        };
+
+        if(p[i].y > p[*lowest].y){
+            *lowest = i;
+        };
+
+        i++;
+    };
+
+    return 0;
+};
+
+/* This function takes in a stright line equation
+ *  and finds y for any x value. The stright line
+ *  equation is in the form of two points a and
+ *  b.
+ *
+ * a: A point on the line.
+ * b: Anonther point on the line.
+ * x: The x position to find the y of.
+ * y: Gets filled in with the y positon found.
+ * returns: 0 on success, negative number otherwise.
+ */
+int D_LineFindY(D_Point * a, D_Point * b, int x, int * y){
+
+    if(a == D_NULL || b == D_NULL || y == D_NULL){
+        return -1;
+    };
+
+    if((b->x - a->x) == 0){
+        return -2;
+    };
+
+    //Notes and workings out for this are in
+    // D_LineFindY-notes.txt
+
+
+    //*y = (((((float)b->y) - a->y) / (((float)b->x) - a->x)) * x) + (a->y - (((((float)b->y) - a->y) / (((float)b->x) - a->x)) * a->x));
+    //*y = (((b->y - a->y) * x) * b->x - a->x) + (((a->y * (b->x - a->x)) - ((b->y - a->y) * a->x)) * b->x - a->x) / (b->x - a->x) * (b->x - a->x); //lol
+
+    *y = (((b->y - a->y) * x) / (b->x - a->x)) + (a->y - ( ( (b->y - a->y) * a->x ) / (b->x - a->x) ) );
+
+    return 0;
+};
+
+/* This function draws a triangle with any three
+ *  points to a surface. Don't expect it to be
+ *  fast enough for 3D.
+ *
+ * s: A surface to draw the tri to.
+ * p: A pointer to an array of at least 3
+ *  D_Points, the rest are ignored.
+ */
+/*int D_FillTri(D_Surf * s, D_Point * p){
+
+    //Remember these are indexes in p
+
+    int highest = -1;
+    int lowest = -1;
+    int mid = 0; //0 on purpose
+
+
+    D_FindExtremePoints(p, 3, &highest, &lowest);
+
+
+    //Find which point in p is the middle
+    // (we know the highest and lowest)
+
+    if(highest == 0 || lowest == 0){
+        mid++;
+
+        if(highest == 1 || lowest == 1){
+            mid++;
+        };
+    };
+
+
+    //Is mid on the right side of the straight
+    // line equation made by the points higest
+    // and lowest
+    if(){};
+};*/
+
 #ifdef D_ALLOW_STB_IMAGE
 
 /*
@@ -966,7 +1285,6 @@ int D_SurfCopyScale(D_Surf * s1, D_Rect * r1, D_Surf * s2, D_Rect * r2){
  * path: The filename/filepath that of the image eg "pic.bmp" or "C:/users/me/pictures/tom.png"
  * returns: A pointer to a created surface, always in ABGR8888 format.
  */
-
 D_Surf * D_LoadImage(char * path){
 
     int w = 0, h = 0, n = 0;
@@ -994,4 +1312,5 @@ D_Surf * D_LoadImage(char * path){
 };
 #endif // D_ALLOW_STB_IMAGE
 
+#endif // D_ALREADY_IMPLEMENTED
 #endif // D_IMPLEMENTATION

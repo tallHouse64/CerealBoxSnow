@@ -1,8 +1,11 @@
 #define D_IMPLEMENTATION
 #include"d.h"
-#undef D_IMPLEMENTATION
 
-#include"sdltod/tod.h"
+#define DEVENTS_IMPLEMENTATION
+#include"devents.h"
+
+#define D_PLATFORM_IMPLEMENTATION
+#include"platform/sdld.h"
 
 #define DELAY 1000/30
 #define MAX_PRTS 4096
@@ -105,7 +108,7 @@ int updatePhysics(){
 
 int main(){
 
-    out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow");
+    out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", 0);
 
     int i = 0;
     while(i < MAX_PRTS){

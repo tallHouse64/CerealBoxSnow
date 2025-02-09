@@ -7,6 +7,9 @@
  *
  */
 
+#ifndef DEVENTS_H
+#define DEVENTS_H
+
 #ifndef D_DONT_USE_STDLIB
 #include<stdlib.h>
 #endif
@@ -45,6 +48,145 @@ typedef enum D_MouseButton {
     D_BUTTON2      = 0x10
 } D_MouseButton;
 
+/* In this keyboard enum, the meaning of the key
+ *  is used. If a "u" key is pressed, a D_Ku
+ *  keypress is the result.
+ *
+ * In the future there may be another enum for
+ *  scancodes, where key positions are used
+ *  instead of thair meanings.
+ *
+ * This is roughly based off a UK keyboard.
+ */
+typedef enum D_Key {
+    D_KNone = 0,
+    D_Ka,
+    D_Kb,
+    D_Kc,
+    D_Kd,
+    D_Ke,
+    D_Kf,
+    D_Kg,
+    D_Kh,
+    D_Ki,
+    D_Kj,
+    D_Kk,
+    D_Kl,
+    D_Km,
+    D_Kn,
+    D_Ko,
+    D_Kp,
+    D_Kq,
+    D_Kr,
+    D_Ks,
+    D_Kt,
+    D_Ku,
+    D_Kv,
+    D_Kw,
+    D_Kx,
+    D_Ky,
+    D_Kz,
+
+    D_K0,
+    D_K1,
+    D_K2,
+    D_K3,
+    D_K4,
+    D_K5,
+    D_K6,
+    D_K7,
+    D_K8,
+    D_K9,
+
+    D_KExclamation,
+    D_KDoubleQuote,
+    D_KPound,
+    D_KDollar,
+    D_KPercentage,
+    D_KCaret,
+    D_KAmpersand,
+    D_KAsterisk,
+    D_KLeftParentheses,
+    D_KRightParentheses,
+
+    D_KLeft,
+    D_KRight,
+    D_KUp,
+    D_KDown,
+
+    //This moves anticlockwise around the edge of
+    // a uk keybaord.
+    D_KEscape,
+    D_KBacktick,
+    D_KTab,
+    D_KCapLock,
+    D_KLeftShift,
+    D_KBackSlash,
+    D_KLeftCtrl,
+    D_KLeftSuper,
+    D_KAlt,
+    D_KSpace,
+    D_KAltGr,
+    D_KRightSuper,
+    D_KContextMenu,
+    D_KRightCtrl,
+    D_KRightShift,
+    D_KEnter,
+    D_KBackspace,
+
+    D_KPipe, // This |
+
+    D_KMinus,
+    D_KEqual,
+    D_KLeftBracket,
+    D_KRightBracket,
+    D_KSemicolon,
+    D_KQuote,
+    D_KHash,
+    D_KComma,
+    D_KPeriod,
+    D_KForwardSlash,
+
+    D_KUnderscore,
+    D_KPlus,
+    D_KLeftBrace,
+    D_KRightBrace,
+    D_KColon,
+    D_KAt,
+    D_KTilde,
+    D_KLessThan,
+    D_KGreaterThan,
+    D_KQuestion,
+
+    D_KF1,
+    D_KF2,
+    D_KF3,
+    D_KF4,
+    D_KF5,
+    D_KF6,
+    D_KF7,
+    D_KF8,
+    D_KF9,
+    D_KF10,
+    D_KF11,
+    D_KF12,
+
+    D_KPrintScreen,
+    D_KScrollLock,
+    D_KPause,
+
+    D_KInsert,
+    D_KHome,
+    D_KPageUp,
+    D_KDelete,
+    D_KEnd,
+    D_KPageDown
+} D_Key;
+
+typedef struct D_KeyboardEvent {
+    D_Key key; //keycode (meaning of the key)
+} D_KeyboardEvent;
+
 typedef struct D_MouseEvent {
     int x, y;
     D_MouseButton button;
@@ -53,19 +195,112 @@ typedef struct D_MouseEvent {
 typedef struct D_Event {
     D_EventType type;
     union {
+        struct D_KeyboardEvent keyboard;
         struct D_MouseEvent mouse;
     };
 } D_Event;
+
+int D_GetNumberOfEventsInEventQueue();
+char D_DKeyToChar(D_Key k);
+int D_StartEvents();
+int D_StopEvents();
+int D_CauseEvent(D_Event * e);
+int D_GetEvent(D_Event * e);
+
+#endif // DEVENTS_H
+
+#ifdef DEVENTS_IMPLEMENTATION
+#ifndef DEVENTS_ALREADY_IMPLEMENTED
+#define DEVENTS_ALREADY_IMPLEMENTED
 
 /*
  * You join the back of the queue, and leave the front.
  */
 D_Event * D_EventQueue;
-int D_EventQueueFront;
-int D_EventQueueBack;
+int D_EventQueueFront; //Starts as 0
+int D_EventQueueBack; //Starts as D_EVENT_QUEUE_LENGTH - 1
 int D_EventQueueFull;
 
 #define D_ISEVENTQUEUEEMPTY() (!(D_EventQueueFull) && (D_EventQueueBack == ((D_EventQueueFront - 1) + D_EVENT_QUEUE_LENGTH) % D_EVENT_QUEUE_LENGTH) )
+
+/* This fuction is used to find how many events
+ *  are in the event queue.
+ *
+ * returns: The number of events in the queue.
+ */
+int D_GetNumberOfEventsInEventQueue(){
+
+    //Check if the queue is in the special full or empty state
+
+    if((D_EventQueueBack >= (D_EventQueueFront - 1) ? ((D_EventQueueBack - D_EventQueueFront) + 1) : (D_EVENT_QUEUE_LENGTH + ((D_EventQueueBack - D_EventQueueFront) + 1)) ) == D_EVENT_QUEUE_LENGTH){
+
+        return (D_EventQueueFull ? 32 : 0);
+    };
+
+    //Otherwise use the same number as the if statement above
+    return (D_EventQueueBack >= (D_EventQueueFront - 1) ? ((D_EventQueueBack - D_EventQueueFront) + 1) : (D_EVENT_QUEUE_LENGTH + ((D_EventQueueBack - D_EventQueueFront) + 1)) );
+};
+
+char D_DKeyToChar(D_Key k){
+    switch(k){
+        case D_Ka: return 'a';
+        case D_Kb: return 'b';
+        case D_Kc: return 'c';
+        case D_Kd: return 'd';
+        case D_Ke: return 'e';
+        case D_Kf: return 'f';
+        case D_Kg: return 'g';
+        case D_Kh: return 'h';
+        case D_Ki: return 'i';
+        case D_Kj: return 'j';
+        case D_Kk: return 'k';
+        case D_Kl: return 'l';
+        case D_Km: return 'm';
+        case D_Kn: return 'n';
+        case D_Ko: return 'o';
+        case D_Kp: return 'p';
+        case D_Kq: return 'q';
+        case D_Kr: return 'r';
+        case D_Ks: return 's';
+        case D_Kt: return 't';
+        case D_Ku: return 'u';
+        case D_Kv: return 'v';
+        case D_Kw: return 'w';
+        case D_Kx: return 'x';
+        case D_Ky: return 'y';
+        case D_Kz: return 'z';
+
+        case D_K0: return '0';
+        case D_K1: return '1';
+        case D_K2: return '2';
+        case D_K3: return '3';
+        case D_K4: return '4';
+        case D_K5: return '5';
+        case D_K6: return '6';
+        case D_K7: return '7';
+        case D_K8: return '8';
+        case D_K9: return '9';
+
+        case D_KBacktick: return '`';
+        case D_KTab: return '\t';
+        case D_KSpace: return ' ';
+        case D_KEnter: return '\n';
+        case D_KBackspace: return '\b';
+
+        case D_KMinus: return '-';
+        case D_KEqual: return '=';
+        case D_KLeftBracket: return '[';
+        case D_KRightBracket: return ']';
+        case D_KSemicolon: return ';';
+        case D_KQuote: return '\'';
+        case D_KTilde: return '~';
+        case D_KLessThan: return '<';
+        case D_KGreaterThan: return '>';
+        case D_KForwardSlash: return '/';
+    };
+
+    return '\0';
+};
 
 int D_StartEvents(){
     D_EventQueue = D_CALLOC(sizeof(D_Event), D_EVENT_QUEUE_LENGTH);
@@ -123,3 +358,7 @@ int D_GetEvent(D_Event * e){
     };
     return -1;
 };
+
+#endif // DEVENTS_ALREADY_IMPLEMENTED
+
+#endif // DEVENTS_IMPLEMENTATION
