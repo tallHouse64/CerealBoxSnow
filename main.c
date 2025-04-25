@@ -27,6 +27,8 @@ int prtsInUse = 100;
 int prtW = 10;
 int prtH = 10;
 int mouseDown = 0; //This is mouse button state
+int mousePressed = 0;
+int mouseReleased = 0;
 D_Point mouse = {0};
 int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
@@ -172,6 +174,8 @@ int main(){
 
     while(running){
         D_PumpEvents();
+        mousePressed = 0;
+        mouseReleased = 0;
         framesSinceMouseEvent++;
 
         while(D_GetEvent(&e) != -1){
@@ -185,11 +189,13 @@ int main(){
 
                 case D_MOUSEUP:
                     mouseDown = 0;
+                    mouseReleased = 1;
                     framesSinceMouseEvent = 0;
                     break;
 
                 case D_MOUSEDOWN:
                     mouseDown = 1;
+                    mousePressed = 1;
                     framesSinceMouseEvent = 0;
                     break;
 
@@ -200,6 +206,9 @@ int main(){
             };
 
         };
+
+        printf("mousePressed %d\n", mousePressed);
+        printf("mouseReleased %d\n", mouseReleased);
 
         updatePhysics();
 
