@@ -10,6 +10,12 @@
 #define DELAY 1000/30
 #define MAX_PRTS 4096
 
+enum gameType_t {
+    GAME_TYPE_SNOW = 0,
+    GAME_TYPE_FIRE,
+    NUM_GAME_TYPES
+} gameType = GAME_TYPE_SNOW;
+
 struct prt_t{
     int x, y;
 } prts[MAX_PRTS];
@@ -57,6 +63,17 @@ int drawPrtSlider(){
     //(prtsInUse / MAX_PRTS) * (s.h / 1)
     box.y = (s.y + ((prtsInUse * s.h) / MAX_PRTS)) - (box.h / 2);
     D_FillRect(out, &box, D_rgbaToFormat(out->format, 200, 170, 160, 255));
+};
+
+int drawGameTypeButton(){
+    D_Rect b = {out->w - 100, out->h - 50, 70, 40};
+
+    if(D_PointInRect(&mouse, &b) && mouseDown){
+        gameType += 1;
+        gameType = gameType % NUM_GAME_TYPES;
+    };
+
+    D_FillRect(out, &b, D_rgbaToFormat(out->format, 200, 170, 160, 255));
 };
 
 int draw(){
@@ -127,8 +144,14 @@ int updatePhysics(){
     int dir = 0;
     while(i < prtsInUse){
 
-        //updateSnowPrt(&prts[i]);
-        updateFirePrt(&prts[i]);
+        switch(gameType){
+            case GAME_TYPE_SNOW:
+                updateSnowPrt(&prts[i]);
+                break;
+            case GAME_TYPE_FIRE:
+                updateFirePrt(&prts[i]);
+                break;
+        };
 
         i++;
     };
@@ -184,6 +207,7 @@ int main(){
 
         if(framesSinceMouseEvent < framesTillUiHide){
             drawPrtSlider();
+            drawGameTypeButton();
         };
 
         D_FlipOutSurf(out);
