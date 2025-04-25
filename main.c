@@ -100,12 +100,28 @@ void updateSnowPrt(struct prt_t * p){
     };
 };
 
+void updateFirePrt(struct prt_t * p){
+    p->y -= (rng() % 10) + 5;
+
+    if((rng() % 2) == 1){
+        p->x += (rng() % 15) + 5;
+    }else{
+        p->x -= (rng() % 15) + 5;
+    };
+
+    if(p->x < -prtW || p->x >= out->w || p->y <= -prtH || (rng() % 64) == 0){
+        p->x = ((out->w / 2) - (prtW / 2));
+        p->y = ((out->h - prtH) - 20) + ((rng() % 10) - 5);
+    };
+};
+
 int updatePhysics(){
     int i = 0;
     int dir = 0;
     while(i < prtsInUse){
 
-        updateSnowPrt(&prts[i]);
+        //updateSnowPrt(&prts[i]);
+        updateFirePrt(&prts[i]);
 
         i++;
     };
