@@ -70,7 +70,7 @@ int drawPrtSlider(){
 int drawGameTypeButton(){
     D_Rect b = {out->w - 100, out->h - 50, 70, 40};
 
-    if(D_PointInRect(&mouse, &b) && mouseDown){
+    if(D_PointInRect(&mouse, &b) && mouseReleased){
         gameType += 1;
         gameType = gameType % NUM_GAME_TYPES;
     };
@@ -206,9 +206,6 @@ int main(){
             };
 
         };
-
-        printf("mousePressed %d\n", mousePressed);
-        printf("mouseReleased %d\n", mouseReleased);
 
         updatePhysics();
 
