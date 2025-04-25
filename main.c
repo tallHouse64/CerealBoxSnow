@@ -75,33 +75,38 @@ int draw(){
 
 };
 
+void updateSnowPrt(struct prt_t * p){
+    p->y += (rng() % 10) + 5;
+
+    if((rng() % 2) == 1){
+        p->x += 10;
+    }else{
+        p->x -= 10;
+    };
+
+    //If the particle is off the left teleport it to the right
+    if(p->x < -prtW){
+        p->x += out->w;
+    };
+
+    //If the particle is off the right teleprt it to the left
+    if(p->x >= out->w){
+        p->x -= out->w;
+    };
+
+    //If the partic is off the bottom then teleport it to the top
+    if(p->y >= out->h){
+        p->y = -prtH;
+    };
+};
+
 int updatePhysics(){
     int i = 0;
     int dir = 0;
     while(i < prtsInUse){
 
-        prts[i].y += (rng() % 10) + 5;
+        updateSnowPrt(&prts[i]);
 
-        if((rng() % 2) == 1){
-            prts[i].x += 10;
-        }else{
-            prts[i].x -= 10;
-        };
-
-        //If the particle is off the left teleport it to the right
-        if(prts[i].x < -prtW){
-            prts[i].x += out->w;
-        };
-
-        //If the particle is off the right teleprt it to the left
-        if(prts[i].x >= out->w){
-            prts[i].x -= out->w;
-        };
-
-        //If the partic is off the bottom then teleport it to the top
-        if(prts[i].y >= out->h){
-            prts[i].y = -prtH;
-        };
         i++;
     };
 };
