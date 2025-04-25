@@ -109,9 +109,16 @@ void updateFirePrt(struct prt_t * p){
         p->x -= (rng() % 15) + 5;
     };
 
+    if(p->y != 0){
+        if(rng() % (p->y) == 0){
+            p->x = ((out->w / 2) - (prtW / 2)) + ((rng() % 20) - 5);
+            p->y = ((out->h - prtH) - 20);
+        };
+    };
+
     if(p->x < -prtW || p->x >= out->w || p->y <= -prtH || (rng() % 64) == 0){
-        p->x = ((out->w / 2) - (prtW / 2));
-        p->y = ((out->h - prtH) - 20) + ((rng() % 10) - 5);
+        p->x = ((out->w / 2) - (prtW / 2)) + ((rng() % 20) - 5);
+        p->y = ((out->h - prtH) - 20);
     };
 };
 
