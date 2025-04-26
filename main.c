@@ -136,18 +136,26 @@ void updateFirePrt(struct prt_t * p){
 
     int respawn = 0;
 
+    //Move the particle down
     p->y -= (rng() % 10) + 5;
 
+    //Another way of moving the particle down
+    /*p->y -= (rng() % 7) - 1;
+    p->y -= p->g / 32;*/
+
+    //Move left or right randomly
     if((rng() % 2) == 1){
         p->x += (rng() % 15) + 5;
     }else{
         p->x -= (rng() % 15) + 5;
     };
 
+    //Make it more transparent randomly
     p->a -= (rng() % 25) - 10;
     if(p->a < 0)p->a = 0;
     if(p->a > 255)p->a = 255;
 
+    //Make it more red randomly
     p->g -= (rng() % 10);
     if(p->g < 0)p->g = 0;
     if(p->g > 255)p->g = 255;
@@ -159,6 +167,7 @@ void updateFirePrt(struct prt_t * p){
         };
     };
 
+    //Respawn if off screen (or on a 1 in 16 chance respawn anyway)
     if(p->x < -prtW || p->x >= out->w || p->y <= -prtH || (rng() % 16) == 0){
         respawn = 1;
     };
