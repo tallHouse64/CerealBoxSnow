@@ -18,6 +18,7 @@ enum gameType_t {
 
 struct prt_t{
     int x, y;
+    int r, g, b, a;
 } prts[MAX_PRTS];
 
 D_Surf * out = D_NULL;
@@ -81,14 +82,26 @@ int drawGameTypeButton(){
 int draw(){
     D_FillRect(out, D_NULL, D_rgbaToFormat(out->format, 20, 20, 20, 255));
 
-    D_Rect r = {0, 0, prtW, prtH};
+    int r = 0, g = 0, b = 0, a = 0; //Temp storage for the particles colour
+
+    D_Rect rect = {0, 0, prtW, prtH};
     int i = 0;
     while(i < prtsInUse){
-        r.x = prts[i].x;
-        r.y = prts[i].y;
-        D_FillRect(out, &r, D_rgbaToFormat(out->format, 255, 255, 255, 255));
-        r.w = prtW;
-        r.h = prtH;
+        rect.x = prts[i].x;
+        rect.y = prts[i].y;
+
+        switch(gameType){
+            case GAME_TYPE_SNOW:
+                D_FillRect(out, &rect, D_rgbaToFormat(out->format, 255, 255, 255, 255));
+                break;
+            case GAME_TYPE_FIRE:
+                D_BlendNormal(prts[i].r, prts[i].g, prts[i].b, prts[i].a, 0, 0, 0, 0, &r, &g, &b, &a);
+                D_FillRect(out, &rect, D_rgbaToFormat(out->format, r, g, b, a));
+                break;
+        };
+
+        rect.w = prtW;
+        rect.h = prtH;
         i++;
     };
 
@@ -120,6 +133,9 @@ void updateSnowPrt(struct prt_t * p){
 };
 
 void updateFirePrt(struct prt_t * p){
+
+    int respawn = 0;
+
     p->y -= (rng() % 10) + 5;
 
     if((rng() % 2) == 1){
@@ -128,16 +144,39 @@ void updateFirePrt(struct prt_t * p){
         p->x -= (rng() % 15) + 5;
     };
 
+    p->a -= (rng() % 25) - 10;
+    if(p->a < 0)p->a = 0;
+    if(p->a > 255)p->a = 255;
+
+    p->g -= (rng() % 10);
+    if(p->g < 0)p->g = 0;
+    if(p->g > 255)p->g = 255;
+
+    //Randomly respawn particles (more likely higher up)
     if(p->y != 0){
         if(rng() % (p->y) == 0){
-            p->x = ((out->w / 2) - (prtW / 2)) + ((rng() % 20) - 5);
-            p->y = ((out->h - prtH) - 20);
+            respawn = 1;
         };
     };
 
-    if(p->x < -prtW || p->x >= out->w || p->y <= -prtH || (rng() % 64) == 0){
+    if(p->x < -prtW || p->x >= out->w || p->y <= -prtH || (rng() % 16) == 0){
+        respawn = 1;
+    };
+
+    if(respawn){
         p->x = ((out->w / 2) - (prtW / 2)) + ((rng() % 20) - 5);
         p->y = ((out->h - prtH) - 20);
+
+        p->r = 255;
+        p->g = (rng() % 20) + 236; //(rng() % 220) + 35; //used to be 83
+        p->b = 0;
+        p->a = 255;
+
+        //Make it more likely red colours are chosen
+        /*if(rng() % 2 != 0){
+            p->g = p->g / 2;
+        };*/
+
     };
 };
 
