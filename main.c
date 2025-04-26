@@ -46,6 +46,30 @@ int rng(){
     */
 };
 
+void setGameType(enum gameType_t nextType){
+
+    switch(nextType){
+        case GAME_TYPE_FIRE:
+
+            for(int i = 0; i < MAX_PRTS; i++){
+                prts[i].x = 0;
+                prts[i].y = -prtH;
+            };
+
+            break;
+        case GAME_TYPE_SNOW:
+
+            for(int i = 0; i < MAX_PRTS; i++){
+                prts[i].x = rng() % out->w;
+                prts[i].y = -(rng() % out->h);
+            };
+
+            break;
+    };
+
+    gameType = nextType;
+};
+
 int drawPrtSlider(){
     //s for the slider itself
     D_Rect s = {out->w - 20, out->h - 210, 10, 200};
@@ -72,8 +96,9 @@ int drawGameTypeButton(){
     D_Rect b = {out->w - 100, out->h - 50, 70, 40};
 
     if(D_PointInRect(&mouse, &b) && mouseReleased){
-        gameType += 1;
-        gameType = gameType % NUM_GAME_TYPES;
+        setGameType((gameType + 1) % NUM_GAME_TYPES);
+        //gameType += 1;
+        //gameType = gameType % NUM_GAME_TYPES;
     };
 
     D_FillRect(out, &b, D_rgbaToFormat(out->format, 200, 170, 160, 255));
@@ -211,12 +236,7 @@ int main(){
 
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", 0);
 
-    int i = 0;
-    while(i < MAX_PRTS){
-        prts[i].x = rng() % out->w;
-        prts[i].y = -(rng() % out->h);
-        i++;
-    };
+    setGameType(GAME_TYPE_SNOW);
 
     D_StartEvents();
 
