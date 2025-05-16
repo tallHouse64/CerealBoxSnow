@@ -62,6 +62,12 @@ void setGameType(enum gameType_t nextType){
             for(int i = 0; i < MAX_PRTS; i++){
                 prts[i].x = rng() % out->w;
                 prts[i].y = -(rng() % out->h);
+                //prts[i].x += rng() % 11;
+                //prts[i].x += (rng() % 3) - 1;
+
+                /*if(i % 12 == 0){
+                    prts[i].x += (rng() % 40) - 20;
+                };*/
             };
 
             break;
