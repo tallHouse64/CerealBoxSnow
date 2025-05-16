@@ -73,6 +73,11 @@ void setGameType(enum gameType_t nextType){
         case GAME_TYPE_SNOW:
 
             for(int i = 0; i < MAX_PRTS; i++){
+                prts[i].r = 255;
+                prts[i].g = 255;
+                prts[i].b = 255;
+                prts[i].a = 255;
+
                 prts[i].x = (rng() + (rng2() % 100)) % out->w;
                 prts[i].y = -((rng() % out->h) + (rng2() % 500));
 
@@ -138,15 +143,8 @@ int draw(){
         rect.x = prts[i].x;
         rect.y = prts[i].y;
 
-        switch(gameType){
-            case GAME_TYPE_SNOW:
-                D_FillRect(out, &rect, D_rgbaToFormat(out->format, 255, 255, 255, 255));
-                break;
-            case GAME_TYPE_FIRE:
-                D_BlendNormal(prts[i].r, prts[i].g, prts[i].b, prts[i].a, 0, 0, 0, 0, &r, &g, &b, &a);
-                D_FillRect(out, &rect, D_rgbaToFormat(out->format, r, g, b, a));
-                break;
-        };
+        D_BlendNormal(prts[i].r, prts[i].g, prts[i].b, prts[i].a, 0, 0, 0, 0, &r, &g, &b, &a);
+        D_FillRect(out, &rect, D_rgbaToFormat(out->format, r, g, b, a));
 
         rect.w = prtW;
         rect.h = prtH;
@@ -239,7 +237,6 @@ void updateFirePrt(struct prt_t * p){
 
 int updatePhysics(){
     int i = 0;
-    int dir = 0;
     while(i < prtsInUse){
 
         switch(gameType){
