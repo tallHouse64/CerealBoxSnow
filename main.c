@@ -47,6 +47,18 @@ int rng(){
     return n;
 };
 
+int rng2(){
+    static int n = 718377;
+    //n = (((n * n * n) + n + 3) % 65535);
+    n = ((449 * n) + 137 + (n % 5)) % 65536;
+
+    //make sure number is not repeating odd, even, odd, even, odd, even
+    /*if(n % 32368 == 0){
+     *      n += 8;
+     */
+    return n;
+};
+
 void setGameType(enum gameType_t nextType){
 
     switch(nextType){
