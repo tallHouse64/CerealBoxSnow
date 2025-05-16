@@ -44,6 +44,7 @@ int rng(){
     /*if(n % 32368 == 0){
      *      n += 8;
     */
+    return n;
 };
 
 void setGameType(enum gameType_t nextType){
@@ -60,8 +61,12 @@ void setGameType(enum gameType_t nextType){
         case GAME_TYPE_SNOW:
 
             for(int i = 0; i < MAX_PRTS; i++){
-                prts[i].x = rng() % out->w;
-                prts[i].y = -(rng() % out->h);
+                prts[i].x = (rng() + (i * 5)) % out->w;
+                prts[i].y = -((rng() % out->h) + (i * 10));
+
+                //prts[i].x += ((i % 100) * 20);
+                //prts[i].y -= ((i % 5) * (rng() % out->w));
+
                 //prts[i].x += rng() % 11;
                 //prts[i].x += (rng() % 3) - 1;
 
