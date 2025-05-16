@@ -73,8 +73,8 @@ void setGameType(enum gameType_t nextType){
         case GAME_TYPE_SNOW:
 
             for(int i = 0; i < MAX_PRTS; i++){
-                prts[i].x = (rng() + (i * 5)) % out->w;
-                prts[i].y = -((rng() % out->h) + (i * 10));
+                prts[i].x = (rng() + (rng2() % 100)) % out->w;
+                prts[i].y = -((rng() % out->h) + (rng2() % 500));
 
                 //prts[i].x += ((i % 100) * 20);
                 //prts[i].y -= ((i % 5) * (rng() % out->w));
