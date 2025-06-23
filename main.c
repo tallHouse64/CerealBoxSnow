@@ -132,7 +132,7 @@ int drawGameTypeButtonRight(){
     D_FillRect(out, &b, D_rgbaToFormat(out->format, 200, 170, 160, 255));
 };
 
-int drawGameTypeButtonLeft(){
+/*int drawGameTypeButtonLeft(){
     D_Rect b = {out->w - 117, out->h - 75, 40, 65};
 
     if(D_PointInRect(&mouse, &b) && mouseReleased){
@@ -147,7 +147,7 @@ int drawGameTypeButtonLeft(){
     };
 
     D_FillRect(out, &b, D_rgbaToFormat(out->format, 200, 170, 160, 255));
-};
+};*/
 
 int draw(){
     D_FillRect(out, D_NULL, D_rgbaToFormat(out->format, 20, 20, 20, 255));
@@ -318,7 +318,7 @@ int main(){
 
         if(framesSinceMouseEvent < framesTillUiHide){
             drawPrtSlider();
-            drawGameTypeButtonLeft();
+            //drawGameTypeButtonLeft();
             drawGameTypeButtonRight();
         };
 
