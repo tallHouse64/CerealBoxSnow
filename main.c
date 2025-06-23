@@ -120,7 +120,7 @@ int drawPrtSlider(){
     D_FillRect(out, &box, D_rgbaToFormat(out->format, 200, 170, 160, 255));
 };
 
-int drawGameTypeButton(){
+int drawGameTypeButtonRight(){
     D_Rect b = {out->w - 70, out->h - 75, 40, 65};
 
     if(D_PointInRect(&mouse, &b) && mouseReleased){
@@ -301,7 +301,7 @@ int main(){
 
         if(framesSinceMouseEvent < framesTillUiHide){
             drawPrtSlider();
-            drawGameTypeButton();
+            drawGameTypeButtonRight();
         };
 
         D_FlipOutSurf(out);
