@@ -1,0 +1,6 @@
+
+To make Cereal Box Snow as portable as possible,
+ images are directly stored in the executable
+ instead of loading from a file at runtime. This
+ means if any image file is changed, the source
+ code copy of the image will need updating.
