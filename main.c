@@ -121,7 +121,7 @@ int drawPrtSlider(){
 };
 
 int drawGameTypeButton(){
-    D_Rect b = {out->w - 100, out->h - 50, 70, 40};
+    D_Rect b = {out->w - 70, out->h - 75, 40, 65};
 
     if(D_PointInRect(&mouse, &b) && mouseReleased){
         setGameType((gameType + 1) % NUM_GAME_TYPES);
