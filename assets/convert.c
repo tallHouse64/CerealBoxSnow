@@ -6,19 +6,24 @@
 
 int main(int argc, char ** argv){
 
-    if(argc < 2){
-        printf("Usage:\nconvert [image]\n\nThis program converts an image file to an array\nthat can be copied into C source code.\n");
+    if(argc < 4){
+        printf("Usage:\nconvert image-file output-file unique-identifier\n\nThis program converts an image file to an array\nin the form of a header file that can be copied\nfrom or included in C source code.\n\nThe unique identifier is used for the name of the\narray and the header file include guards for\nexample \"#ifndef IMAGE_unique_identifier_H\".\n");
         return 0;
     };
 
     int w = 0, h = 0, n = 0;
     unsigned char * data = stbi_load(argv[1], &w, &h, &n, 0);
     if(!data){
-        printf("Couldn't open file.\n");
+        printf("Couldn't open the image file.\n");
     };
 
+    FILE * f = fopen(argv[2], "w");
 
-    printf("char image[] = {");
+
+    fprintf(f, "\n#ifndef IMAGE_%s_H\n", argv[3]);
+    fprintf(f,   "#define IMAGE_%s_H\n", argv[3]);
+
+    fprintf(f, "\nchar %s[] = {", argv[3]);
 
     int x = 0, y = 0;
     while(y < h){
@@ -26,21 +31,24 @@ int main(int argc, char ** argv){
         x = 0;
         while(x < w){
 
-            printf("%d", data[(y * w) + x]);
+            fprintf(f, "%d", data[(y * w) + x]);
 
             if(y == h - 1 && x == w - 1){
 
             }else{
-                printf(", ");
+                fprintf(f, ", ");
             };
 
             x++;
         };
 
-        printf("\n");
+        fprintf(f, "\n");
 
         y++;
     };
 
-    printf("\n};");
+    fprintf(f, "\n};");
+    fprintf(f, "\n#endif\n");
+
+    fclose(f);
 };
