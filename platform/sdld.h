@@ -7,8 +7,19 @@
 #ifndef D_PLATFORM_ALREADY_IMPLEMENTED
 #define D_PLATFORM_ALREADY_IMPLEMENTED
 
-SDL_Window * sdlw[D_MAX_OUT_SURFS] = {NULL};
+
+/* These arrays are here so that their (platform
+ *  specific) data does not have to be stored in
+ *  the D_Surf structure.
+ *
+ * You can use a D_Surf's outId as an index in
+ *  these arrays to get it's window and
+ *  SDL_Surface.
+ */
+SDL_Window * sdlw[D_MAX_OUT_SURFS]  = {NULL};
 SDL_Surface * sdls[D_MAX_OUT_SURFS] = {NULL};
+D_Surf * outSurfs[D_MAX_OUT_SURFS]  = {NULL}; //This array makes it possible to find a D_Surf address from an outId.
+
 
 /* This creates a window that can be drawn
  *  to, remember call D_FlipOutSurf() on
@@ -74,6 +85,8 @@ D_Surf * D_GetOutSurf(int x, int y, int w, int h, char * title, D_OutSurfFlags f
     s->blendMode = D_BLENDMODE_NORMAL;
     s->outSurfFlags = flags;
 
+    outSurfs[i] = s;
+
     //From looking at SDL_Pixels.h, because SDL_PixelFormat
     //has a BytesPerPixel it makes me think that all SDL
     //surfaces store pixels like d.h does,only storing
@@ -99,10 +112,101 @@ int D_FreeOutSurf(D_Surf * s){
     SDL_DestroyWindow(sdlw[s->outId]);
     sdlw[s->outId] = NULL;
     sdls[s->outId] = NULL;
+    outSurfs[s->outId] = NULL;
     D_FREE(s);
     s = D_NULL;
 
     return 0;
+};
+
+/* This function finds the outId of an outSurf
+ *  from it's SDL_Window address.
+ *
+ * If it can't find an outId, it returns a
+ *  negative number.
+ *
+ * w: The window to find the outId of.
+ * returns: The outId found or a negative number
+ *  on failure.
+ */
+int D_WindowToOutId(SDL_Window * w){
+    int i = 0;
+    while(i < D_MAX_OUT_SURFS){
+
+        if(sdlw[i] == w){
+            return i;
+        };
+
+        i++;
+    };
+
+    return -1;
+};
+
+/* This function finds the outSurf from it's
+ *  outId.
+ *
+ * outId: The id of the outSurf.
+ * returns: The address of the outSurf.
+ */
+D_Surf * D_OutIdToOutSurf(int outId){
+
+    //Is outId a valid index
+    if(outId < 0 || outId >= D_MAX_OUT_SURFS){
+        //no
+        return D_NULL;
+    };
+
+    return outSurfs[outId];
+};
+
+/* This function frees and recreates an outSurf
+ *  without destroying it's window. This is to
+ *  make window resizing easier.
+ *
+ * When a window is resized, a D_OUTSURFRESIZE
+ *  event should fire. After it fires the outSurf
+ *  becomes invalid. The event tells you which
+ *  using the outId. At this point you can call
+ *  this function with the invalid outSurf to
+ *  free it, it returns a new one with the same
+ *  window but new size.
+ *
+ * The new outSurf keeps the same outId.
+ *
+ * s: The old outSurf to free.
+ * returns: A new outSurf with the same window,
+ *  now resized.
+ */
+D_Surf * D_GetResizedOutSurf(D_Surf * s){
+
+    //The SDL_Surface should now be invalid
+    s->pix = D_NULL;
+    sdls[s->outId] = D_NULL;
+
+    //Temporarily keep the old D_Surf info and the window
+    D_Surf temp = *s;
+    SDL_Window * window = sdlw[s->outId];
+
+    sdlw[s->outId] = D_NULL; //Stop D_FreeOutSurf() destroying the window.
+    D_FreeOutSurf(s);
+    s = D_NULL;
+
+    sdlw[temp.outId] = window;
+    sdls[temp.outId] = SDL_GetWindowSurface(window);
+
+    outSurfs[temp.outId] = D_CreateSurfFrom(
+        sdls[temp.outId]->w,
+        sdls[temp.outId]->h,
+        D_FindPixFormat(sdls[temp.outId]->format->Rmask, sdls[temp.outId]->format->Gmask, sdls[temp.outId]->format->Bmask, sdls[temp.outId]->format->Amask, sdls[temp.outId]->format->BitsPerPixel),
+        sdls[temp.outId]->pixels);
+
+    //Bring back some info we want to keep from temp
+    outSurfs[temp.outId]->outId = temp.outId;
+    outSurfs[temp.outId]->flags = temp.flags;
+    outSurfs[temp.outId]->outSurfFlags = temp.outSurfFlags;
+
+    return outSurfs[temp.outId];
 };
 
 /* This takes the an outSurf created by
@@ -122,6 +226,14 @@ int D_FlipOutSurf(D_Surf * s){
     return 0;
 };
 
+/* This function converts an SDL keycode to a
+ *  D_Key and returns it. If the key code is not
+ *  recognized then D_KNone is returned.
+ *
+ * s: The SDL_KeyCode to convert.
+ * returns: The converted D_Key or D_KNone if
+ *  it's not recognized.
+ */
 D_Key D_SDLKToDKey(SDL_KeyCode s){
 
     switch(s){
@@ -248,6 +360,18 @@ D_Key D_SDLKToDKey(SDL_KeyCode s){
     return D_KNone;
 };
 
+/* This function fills the event queue with the
+ *  events that happened since the last call to
+ *  D_PumpEvents(). Use D_GetEvent() to read take
+ *  them off the queue.
+ *
+ * If this function causes a segfault, it's
+ *  probably because D_StartEvents() has not been
+ *  called. Remember to to also use
+ *  D_StopEvents().
+ *
+ * returns: 0.
+ */
 int D_PumpEvents(){
     SDL_PumpEvents();
     SDL_Event se;
@@ -295,6 +419,19 @@ int D_PumpEvents(){
                 e.type = D_QUIT;
                 D_CauseEvent(&e);
                 break;
+
+            case SDL_WINDOWEVENT:
+
+                if(se.window.event == SDL_WINDOWEVENT_RESIZED){
+                    e.type = D_OUTSURFRESIZE;
+                    e.outSurf.data1 = se.window.data1;
+                    e.outSurf.data2 = se.window.data2;
+                    e.outSurf.outId = D_WindowToOutId(SDL_GetWindowFromID(se.window.windowID));
+                    D_CauseEvent(&e);
+                };
+
+                break;
+
         };
 
     };

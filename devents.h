@@ -16,6 +16,19 @@
 
 #define D_EVENT_QUEUE_LENGTH 32
 
+/* If you choose to define any of the below,
+ *  replacing them (D_NULL, D_CALLOC, etc). Make
+ *  sure they are defined in the same way
+ *  everywhere devents.h is included.
+ *
+ * You could do this by either making a small
+ *  header file that includes devents.h and other
+ *  drws-lib libraries with define lines before
+ *  the include lines and include that file in
+ *  all project files, or (if you use make) add a
+ *  -D flag to every use of the compiler in a
+ *  FLAGS variable for example.
+ */
 #ifndef D_NULL
 #define D_NULL 0x0
 #endif
@@ -28,6 +41,11 @@
 #define D_FREE free
 #endif
 
+//D_CUSTOMEVENT_SIZE is in bytes
+#ifndef D_CUSTOMEVENT_SIZE
+#define D_CUSTOMEVENT_SIZE 32
+#endif
+
 typedef enum D_EventType {
     D_NOEVENT = 0,
     D_KEYDOWN,
@@ -35,7 +53,10 @@ typedef enum D_EventType {
     D_MOUSEDOWN,
     D_MOUSEUP,
     D_MOUSEMOVE,
-    D_QUIT
+    D_QUIT,
+    D_OUTSURFRESIZE,
+    D_FIRSTCUSTOMEVENT,
+    D_LASTEVENT = 255
 } D_EventType;
 
 //Bit masks that can be combin using bitwis or |
@@ -192,14 +213,36 @@ typedef struct D_MouseEvent {
     D_MouseButton button;
 } D_MouseEvent;
 
+/* This structure is used for the D_OUTSURFRESIZE
+ *  event.
+ *
+ * Use event.outsurf to access this structure.
+ *
+ * If an event fires with the D_OUTSURFRESIZE
+ *  type, then data1 is the new width and data2
+ *  is the new height.
+ */
+typedef struct D_OutSurfEvent {
+    int outId;
+    int data1;
+    int data2;
+} D_OutSurfEvent;
+
+typedef struct D_CustomEvent {
+    char data[D_CUSTOMEVENT_SIZE];
+} D_CustomEvent;
+
 typedef struct D_Event {
     D_EventType type;
     union {
         struct D_KeyboardEvent keyboard;
         struct D_MouseEvent mouse;
+        struct D_OutSurfEvent outSurf;
+        struct D_CustomEvent custom;
     };
 } D_Event;
 
+D_EventType D_RegisterCustomEvent();
 int D_GetNumberOfEventsInEventQueue();
 char D_DKeyToChar(D_Key k);
 int D_StartEvents();
@@ -223,6 +266,27 @@ int D_EventQueueFull;
 
 #define D_ISEVENTQUEUEEMPTY() (!(D_EventQueueFull) && (D_EventQueueBack == ((D_EventQueueFront - 1) + D_EVENT_QUEUE_LENGTH) % D_EVENT_QUEUE_LENGTH) )
 
+/* This function gives unique custom event type
+ *  numbers. Each time it is called it adds one
+ *  to a counter and returns the number before
+ *  adding one. (Use this to make your own
+ *  event.type number).
+ *
+ * The number of custom events you can register
+ *  is (D_LASTEVENT - D_FIRSTCUSTOMEVENT) + 1.
+ */
+D_EventType D_RegisterCustomEvent(){
+    static int nextFreeEvent = D_FIRSTCUSTOMEVENT;
+
+    if(nextFreeEvent >= D_LASTEVENT + 1){
+        nextFreeEvent = D_LASTEVENT + 1;
+        return D_NOEVENT;
+    };
+
+    nextFreeEvent += 1;
+    return nextFreeEvent - 1;
+};
+
 /* This fuction is used to find how many events
  *  are in the event queue.
  *
@@ -241,6 +305,13 @@ int D_GetNumberOfEventsInEventQueue(){
     return (D_EventQueueBack >= (D_EventQueueFront - 1) ? ((D_EventQueueBack - D_EventQueueFront) + 1) : (D_EVENT_QUEUE_LENGTH + ((D_EventQueueBack - D_EventQueueFront) + 1)) );
 };
 
+/* This function converts a D_Key to a char. If
+ *  the key has no char value (like the shift
+ *  key) it returns null.
+ *
+ * k: The D_Key to convert.
+ * returns: A char value from the D_Key.
+ */
 char D_DKeyToChar(D_Key k){
     switch(k){
         case D_Ka: return 'a';
@@ -281,11 +352,25 @@ char D_DKeyToChar(D_Key k){
         case D_K8: return '8';
         case D_K9: return '9';
 
+        case D_KExclamation: return '!';
+        case D_KDoubleQuote: return '"';
+        //case D_KPound: return 0;
+        case D_KDollar: return '$';
+        case D_KPercentage: return '%';
+        case D_KCaret: return '^';
+        case D_KAmpersand: return '&';
+        case D_KAsterisk: return '*';
+        case D_KLeftParentheses: return '(';
+        case D_KRightParentheses: return ')';
+
         case D_KBacktick: return '`';
         case D_KTab: return '\t';
+        case D_KBackSlash: return '\\';
         case D_KSpace: return ' ';
         case D_KEnter: return '\n';
         case D_KBackspace: return '\b';
+
+        case D_KPipe: return '|';
 
         case D_KMinus: return '-';
         case D_KEqual: return '=';
@@ -293,15 +378,29 @@ char D_DKeyToChar(D_Key k){
         case D_KRightBracket: return ']';
         case D_KSemicolon: return ';';
         case D_KQuote: return '\'';
+        case D_KHash: return '#';
+        case D_KComma: return ',';
+        case D_KPeriod: return '.';
+        case D_KForwardSlash: return '/';
+
+        case D_KUnderscore: return '_';
+        case D_KPlus: return '+';
+        case D_KLeftBrace: return '{';
+        case D_KRightBrace: return '}';
+        case D_KColon: return ':';
+        case D_KAt: return '@';
         case D_KTilde: return '~';
         case D_KLessThan: return '<';
         case D_KGreaterThan: return '>';
-        case D_KForwardSlash: return '/';
+        case D_KQuestion: return '?';
     };
 
     return '\0';
 };
 
+/* This function allocates memory for the event
+ *  queue.
+ */
 int D_StartEvents(){
     D_EventQueue = D_CALLOC(sizeof(D_Event), D_EVENT_QUEUE_LENGTH);
     D_EventQueueFront = 0;
@@ -309,6 +408,12 @@ int D_StartEvents(){
     D_EventQueueFull = 0;
 };
 
+/* This function frees the memory allocated for
+ *  the event queue. After calling it, don't call
+ *  D_GetEvent() or D_CauseEvent() unless you
+ *  call D_StartEvents() again. (You would get a
+ *  segfault).
+ */
 int D_StopEvents(){
     D_FREE(D_EventQueue);
     D_EventQueue = D_NULL;

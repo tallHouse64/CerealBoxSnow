@@ -4,25 +4,28 @@
  *
  * project started Tue 12/11/2024
  *
- * The purpose of this lib is to make gmaes/programs
- *  that are very cross platform. As much as possible.
- *  Think Windows, Mac, Linux, NDS, TI calcs,
- *  IPOD, PSP. Only Windows and Linux are tested and
- *  work so far. I want it to be the most cross platform
- *  library ever because I want to make games that
- *  anyone can play no matter what device they have.
- *  This is why the library is not many single header
- *  files and has as few dependancies as
- *  possible, I also have chosen to make it possible
- *  to remove all dependancies using C defines,
- *  including the C stadard library (you can give your
- *  own calloc and free for this library to use).
- *  Also it would be great to make a game engine with
- *  this library, even better if the engine itself
- *  runs on the library and works on everything it
- *  supports. Imagine making a real game for PC on DS!
- *  I want to do that as a joke, (making a PC game on
- *  DS I mean).
+ * The purpose of this library is to make
+ *  gmaes/programs that are very cross platform.
+ *  As many platforms as possible, this is the
+ *  main goal of the library. Think Windows, Mac,
+ *  Linux, NDS, TI calcs, IPOD, PSP. Only Windows
+ *  and Linux are tested and work so far. This
+ *  way anyone can play games I make no matter
+ *  what device they have. This is why the
+ *  library is a group of single header files and
+ *  has as few dependancies as possible, all
+ *  dependencies (with few exeptions) and
+ *  platform specific code are separated away
+ *  into the platform single header file
+ *  libraries (sdld.h for sdl2 and ndsd.h for DS)
+ *  one file per platform, I also have chosen to
+ *  make it possible to remove all drws-lib core
+ *  dependancies using C defines, (you can give
+ *  your own calloc and free for this library to
+ *  use). Also it would be great to make a game
+ *  engine with this library, even better if the
+ *  engine itself runs on the library and works
+ *  on everything it supports.
  *
  * You can use this lib to create surfaces, draw
  *  to them and copy one surface to another with at
@@ -37,10 +40,9 @@
  *  library, it just works.
  *
  * Things to add.
- * I want to add events and sound out. This way the
+ * I hoping to add sound out. This way the
  *  library can be used to make games and other
- *  programs. I also want to add blending, (NONE,
- *  NORMAL, MULTIPLY and others plus hopfuly cutom).
+ *  programs. I also want to add custom blending.
  *
  * Using stdlib
  *  This library uses calloc, you can turn this off.
@@ -124,7 +126,15 @@
  * returns: The bitDepth converted to bytes.
  */
 #define D_BITDEPTHTOBYTES(bitDepth) ((bitDepth) > 32) ? -1 : (((bitDepth) > 16) ? 4 : (((bitDepth) > 8) ? 2 : ((bitDepth) > 0) ? 1 : -2 ))
-//                                                                            32bits                  16bits                 8bi
+//                                                                            32bits                  16bits                 8bits
+
+/* D_SurfFlags are for storing qualities of a
+ *  surface. They can be combined bitwise "|"
+ *  together.
+ */
+typedef enum D_SurfFlags {
+    D_SURF_PREALLOCATED = 0x1
+} D_SurfFlags;
 
 /* D_OutSurfFlags are used to store qualities of
  *  a surface used for output like weather it's
@@ -147,7 +157,11 @@ typedef enum D_OutSurfFlags {
  */
 typedef enum D_BLENDMODE {
     D_BLENDMODE_NONE = 0,
-    D_BLENDMODE_NORMAL
+    D_BLENDMODE_NORMAL,
+    D_BLENDMODE_ADD,
+    D_BLENDMODE_MULTIPLY,
+    D_BLENDMODE_SUBTRACT,
+    D_BLENDMODE_DIVIDE
 } D_BLENDMODE;
 
 /* This uses masks for rgba
@@ -192,7 +206,9 @@ typedef struct D_Surf {
     void * pix;
     int w, h;
     int outId;
+    D_uint8 alphaMod;
     D_BLENDMODE blendMode;
+    D_SurfFlags flags;
     D_OutSurfFlags outSurfFlags;
     D_PixFormat format;
 } D_Surf;
@@ -201,6 +217,8 @@ typedef struct D_Surf {
 
 //If you want to see the comments for each function to thair implementations
 
+void D_SetError(const char * error);
+const char * D_GetError(void);
 int D_PointInRect(D_Point * p, D_Rect * r);
 int D_GetMaskShift(D_uint32 m);
 int D_GetMaskLen(D_uint32 m);
@@ -211,6 +229,7 @@ int D_RawFormatTorgba(D_uint32 p, D_PixFormat f, int * r, int * g, int * b, int 
 int D_FormatTorgba(D_uint32 p, D_PixFormat f, int * r, int * g, int * b, int * a);
 D_uint32 D_ConvertPixel(D_PixFormat from, D_PixFormat to, D_uint32 p);
 D_Surf * D_CreateSurf(int w, int h, D_PixFormat format);
+D_Surf * D_CreateSurfFrom(int w, int h, D_PixFormat format, void * pix);
 int D_FreeSurf(D_Surf * s);
 int D_BlendNone(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a);
 int D_BlendNormal(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a);
@@ -221,9 +240,7 @@ int D_CharToMap(char c, int * x, int * y);
 int D_PrintToSurf(D_Surf * s, D_Surf * font, D_Point * p, int height, int extraSpacing, char * t);
 int D_FindExtremePoints(D_Point * p, int numPoints, int * highest, int * lowest);
 int D_LineFindY(D_Point * a, D_Point * b, int x, int * y);
-#ifdef D_ALLOW_STB_IMAGE
 D_Surf * D_LoadImage(char * path);
-#endif
 
 #endif // D_H
 
@@ -232,6 +249,34 @@ D_Surf * D_LoadImage(char * path);
 #ifdef D_IMPLEMENTATION
 #ifndef D_ALREADY_IMPLEMENTED
 #define D_ALREADY_IMPLEMENTED
+
+const char D_D_NoError[] = "";
+const char * D_ErrorString = D_D_NoError;
+
+/* This function can be used to set the error
+ *  that is returned by D_GetError(). When it is
+ *  called the old error string is removed.
+ *
+ * This function does not copy the string, make
+ *  sure the string will stay allocated after
+ *  your function returns.
+ *
+ * error: The string to set the current error to.
+ */
+void D_SetError(const char * error){
+    D_ErrorString = error;
+};
+
+/* This function can be used after running a
+ *  function to see if an error happened. Read
+ *  the documentation of a function to see if it
+ *  will set an error before using it.
+ *
+ * returns: A string of the last error set.
+ */
+const char * D_GetError(void){
+    return D_ErrorString;
+};
 
 /* This checks if a point is in a rectangle and returns 1
  *  if it is, otherwise it returns 0. If p or r are null
@@ -596,12 +641,19 @@ D_uint32 D_ConvertPixel(D_PixFormat from, D_PixFormat to, D_uint32 p){
     return D_rgbaToFormat(to, r, g, b, a);
 };
 
-/* Does what it says. This creates a surface (shortened
- *  to surf). W and h are width and height. Format is
- *  what format the rgba values are arranged in and thair sizes,
- *  if your not sure what this should be just use
+/* Does what it says. This creates a surface
+ *  (shortened to surf). W and h are width and
+ *  height. Format is what format the rgba values
+ *  are arranged in and thair sizes, if your not
+ *  sure what this should be just use
  *  D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32)
- *  in the place of format. It returns an address to the surface.
+ *  in the place of format. D_CreateSurf()
+ *  returns an address (pointer) to the surface
+ *  or null on error.
+ *
+ * You can use D_SurfCopyScale() to copy part of
+ *  one surface to another and D_FillRect() to
+ *  fill an area with a colour.
  *
  * Free the surface with D_FreeSurf();
  *
@@ -614,25 +666,84 @@ D_uint32 D_ConvertPixel(D_PixFormat from, D_PixFormat to, D_uint32 p){
  * Returns: The address of the created surface.
  */
 D_Surf * D_CreateSurf(int w, int h, D_PixFormat format){
-    //todo: handle errors
     D_Surf * s = D_CALLOC(1, sizeof(D_Surf));
+    if(s == D_NULL){
+        return D_NULL;
+    };
+
     s->pix = D_CALLOC(w * h, D_BITDEPTHTOBYTES(format.bitDepth));
+    if(s->pix == D_NULL){
+        D_FREE(s);
+        s = D_NULL;
+        return D_NULL;
+    };
+
     s->w = w;
     s->h = h;
     s->outId = -1;
+    s->alphaMod = 255;
     s->blendMode = D_BLENDMODE_NORMAL;
+    s->flags = 0;
     s->outSurfFlags = 0;
     s->format = format;
     return s;
 };
 
-/* This frees a surface created with D_CreateSurf().
+/* This function can be used to create a surface
+ *  with pixel data that is already allocated,
+ *  which is passed into it with a void pointer.
  *
+ * The pix pointer must point to allocated memory
+ *  that has a length in bytes that is at least
+ *  w * h * bitDepthInBytes. Otherwise you may
+ *  get a segfault.
+ *
+ * The surface can be freed with D_FreeSurf().
+ *
+ * w: The width of the surface.
+ * h: The height of the surface.
+ * format: The format of the pixel data.
+ * pix: A pointer to the pixel data to put in the surface.
+ */
+D_Surf * D_CreateSurfFrom(int w, int h, D_PixFormat format, void * pix){
+    D_Surf * s = D_CALLOC(1, sizeof(D_Surf));
+    if(s == D_NULL){
+        return D_NULL;
+    };
+
+    s->pix = pix;
+    s->w = w;
+    s->h = h;
+    s->outId = -1;
+    s->alphaMod = 255;
+    s->blendMode = D_BLENDMODE_NORMAL;
+    s->flags = D_SURF_PREALLOCATED;
+    s->outSurfFlags = 0;
+    s->format = format;
+    return s;
+};
+
+/* This frees a surface created with
+ *  D_CreateSurf() or D_CreateSurfFrom(). If the
+ *  surface is preallocated (made using
+ *  D_CreateSurfaceFrom()), it only frees the
+ *  surface struct but not the allocated
+ *  preallocated pixel data.
+ *
+ * s: The surface to free.
  */
 int D_FreeSurf(D_Surf * s){
     //todo: deal with errors
-    D_FREE(s->pix);
+
+    //If the surface pixel data is not preallocated
+    if(!(s->flags & D_SURF_PREALLOCATED)){
+
+        //Free the pixel data
+        D_FREE(s->pix);
+    };
+
     D_FREE(s);
+
     return 0;
 };
 
@@ -691,6 +802,154 @@ int D_BlendNormal(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da
     return 0;
 };
 
+/* This function combines two colours using
+ *  additive blending. It takes in the colours as
+ *  rgba values between 0 and 255. The r, g, b, a
+ *  pointers are filled in with the result
+ *  colour.
+ *
+ * This is the equation:
+ *  dstRGB = (srcRGB * srcA) + dstRGB
+ *  dstA = dstA
+ *
+ * sr, sg, sb, sa: Source rgba values to blend with.
+ * dr, dg, db, da: Destination rgba values to blend with.
+ * r, g, b, a: Pointers to fill with the result of blending.
+ * returns: Always 0.
+ */
+int D_BlendAdd(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a){
+    //The equation for dstRGB in 0-255 form.
+    //
+    // dstRGB     srcRGB   srcA     dstRGB
+    // ------ = ( ------ * ---- ) + ------
+    //  255        255     255       255
+
+    *r = ((sr * sa) / 255) + dr;
+    if(*r > 255){*r = 255;};
+
+    *g = ((sg * sa) / 255) + dg;
+    if(*g > 255){*g = 255;};
+
+    *b = ((sb * sa) / 255) + db;
+    if(*b > 255){*b = 255;};
+
+    *a = da;
+};
+
+/* This function combines two colours using
+ *  multiplication blending. It takes in the
+ *  colours as rgba values between 0 and 255. The
+ *  r, g, b, a pointers are filled in with the
+ *  result colour.
+ *
+ * This is the equation:
+ *  dstRGB = (srcRGB * dstRGB) + (dstRGB * (1-srcA))
+ *  dstA = dstA
+ *
+ * sr, sg, sb, sa: Source rgba values to blend with.
+ * dr, dg, db, da: Destination rgba values to blend with.
+ * r, g, b, a: Pointers to fill with the result of blending.
+ * returns: Always 0.
+ */
+int D_BlendMultiply(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a){
+    //
+    // dstRGB     srcRGB   dstRGB       dstRGB           srcA
+    // ------ = ( ------ * ------ ) + ( ------ * ( 255 - ---- ))
+    //  255        255      255          255             255
+
+    *r = ((sr * dr) / 255) + (( dr * (255 - sa) ) / 255);
+    if(*r > 255){*r = 255;};
+
+    *g = ((sg * dg) / 255) + (( dg * (255 - sa) ) / 255);
+    if(*g > 255){*g = 255;};
+
+
+    *b = ((sb * db) / 255) + (( db * (255 - sa) ) / 255);
+    if(*b > 255){*b = 255;};
+
+    *a = da;
+};
+
+/* This function blends two colours, subtracting
+ *  them. It takes in the colours as rgba values
+ *  between 0 and 255. The r, g, b, a pointers
+ *  are filled with the result colour.
+ *
+ * dstRGB = dstRGB - (srcRGB * srcA)
+ * dstA = dstA
+ *
+ * sr, sg, sb, sa: Source rgba values to blend with.
+ * dr, dg, db, da: Destination rgba values to blend with.
+ * r, g, b, a: Pointers to fill with the result of blending.
+ * returns: Always 0.
+ */
+int D_BlendSubtract(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a){
+    //This is the equation in 0 to 255 form.
+    //
+    // dstRGB   dstRGB   srcRGB   srcA
+    // ------ = ------ ( ------ * ---- )
+    //  255      255      255     255
+
+    *r = (dr - ((sr * sa) / 255));
+    if(*r < 0){*r = 0;};
+
+    *g = (dg - ((sg * sa) / 255));
+    if(*g < 0){*g = 0;};
+
+    *b = (db - ((sb * sa) / 255));
+    if(*b < 0){*b = 0;};
+
+    *a = da;
+
+};
+
+/*
+ *
+ */
+int D_BlendDivide(int sr, int sg, int sb, int sa, int dr, int dg, int db, int da, int * r, int * g, int * b, int * a){
+    //
+    //
+    //                           (srcRGB + 1)
+    // dstRGB = min( W, dstRGB / ------------ )
+    //                                256
+    //
+    //Rearrange so information is not lost in
+    // dividing by 256.
+    //
+    //                                256
+    // dstRGB = min( W, dstRGB * ( ---------- ) )
+    //                             srcRGB + 1
+    //
+    //                    dstRGB * 256
+    // dstRGB = min( W, ( ------------ ) )
+    //                     srcRGB + 1
+    //
+    // W here means white, r: 255 g: 255 b: 255.
+    //
+    //Factor in srcA.
+    //
+    //                      dstRGB * 256       srcA       dstRGB   255 - srcA
+    // dstRGB = ( min( W, ( ------------ ) ) * ---- ) + ( ------ * ---------- )
+    //                       srcRGB + 1        255         255        255
+    //
+    //This page was a great help for this:
+    // https://www.linuxtopia.org/online_books/graphics_tools/gimp_advanced_guide/gimp_guide_node55_002.html
+
+    *r = (dr * 256) / (sr + 1);
+    if(*r > 255){*r = 255;};
+    *r = ((*r * sa) / 255) + ((dr * (255 - sa)) / 255);
+
+    *g = (dg * 256) / (sg + 1);
+    if(*g > 255){*g = 255;};
+    *g = ((*g * sa) / 255) + ((dg * (255 - sa)) / 255);
+
+    *b = (db * 256) / (sb + 1);
+    if(*b > 255){*b = 255;};
+    *b = ((*b * sa) / 255) + ((db * (255 - sa)) / 255);
+
+    *a = da;
+};
+
 /* This function blends colours using a
  *  blendmode. The pointers r, g, b and a are
  *  filled in with the result colour. It uses
@@ -720,8 +979,42 @@ int D_Blend(D_BLENDMODE blend, int sr, int sg, int sb, int sa, int dr, int dg, i
         case D_BLENDMODE_NORMAL:
             D_BlendNormal(sr, sg, sb, sa, dr, dg, db, da, r, g, b, a);
             break;
+        case D_BLENDMODE_MULTIPLY:
+            D_BlendMultiply(sr, sg, sb, sa, dr, dg, db, da, r, g, b, a);
+            break;
+        case D_BLENDMODE_ADD:
+            D_BlendAdd(sr, sg, sb, sa, dr, dg, db, da, r, g, b, a);
+            break;
+        case D_BLENDMODE_SUBTRACT:
+            D_BlendSubtract(sr, sg, sb, sa, dr, dg, db, da, r, g, b, a);
+            break;
+        case D_BLENDMODE_DIVIDE:
+            D_BlendDivide(sr, sg, sb, sa, dr, dg, db, da, r, g, b, a);
+            break;
     };
     return 0;
+};
+
+/* This function sets the alpha modulation number
+ *  of a surface. This number can be between 0
+ *  and 255.
+ *
+ * While blending two surfaces (copying one onto
+ *  another) this alphaMod number is multiplied
+ *  by the source pixels. Think of it as the
+ *  source surface's opacity. Use 255 to make it
+ *  fully opaque and 0 to make it fully
+ *  transparent.
+ *
+ * s: The surface to change the alpha modulation
+ *  of.
+ * alphaMod: The new aplha modulation number, can
+ *  be 0 to 255. Think of it as the surface's
+ *  opacity.
+ */
+void D_SetSurfAlphaMod(D_Surf * s, D_uint8 alphaMod){
+    s->alphaMod = alphaMod;
+    return;
 };
 
 /* Cut off any sides of an inner rect that reach out of
@@ -855,8 +1148,28 @@ int D_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
     return 0;
 };
 
-//Used for D_SurfCopyScale(), it may change at any time.
-#define D_D_SCSPIXEL(from, to) {D_FormatTorgba((to)[(y * s2->w) + x], s2->format, &dr, &dg, &db, &da); D_FormatTorgba((from)[(((((y - r2->y) * r1->h) / r2->h) + r1->y) * s1->w) + ((((x - r2->x) * r1->w) / r2->w) + r1->x)], s1->format, &sr, &sg, &sb, &sa); D_Blend(s1->blendMode, sr, sg, sb, sa, dr, dg, db, da, &r, &g, &b, &a); (to)[(y * s2->w) + x] = D_rgbaToFormat(s2->format, r, g, b, a);}
+/* This macro is used for D_SurfCopyScale(), it
+ *  may change or be removed at any time.
+ *
+ * First the destination pixel's rgba and put
+ *  them in dr, dg, db, da.
+ *
+ * Then take the source pixel's rgba and put them
+ *  in sr, sg, sb, sa.
+ *
+ * Then multiply the source surface's alphaMod
+ *  with sa and store that in sa.
+ *
+ * Then blend the source and destination pixels
+ *  rgba values using the source surface's blend
+ *  mode, putting those new values in the rgba
+ *  variables.
+ *
+ * Finally write the blended values to the
+ *  destination pixel.
+ */
+#define D_D_SCSPIXEL(from, to) {D_FormatTorgba((to)[(y * s2->w) + x], s2->format, &dr, &dg, &db, &da); D_FormatTorgba((from)[(((((y - r2->y) * r1->h) / r2->h) + r1->y) * s1->w) + ((((x - r2->x) * r1->w) / r2->w) + r1->x)], s1->format, &sr, &sg, &sb, &sa); sa = (sa * s1->alphaMod) / 255; D_Blend(s1->blendMode, sr, sg, sb, sa, dr, dg, db, da, &r, &g, &b, &a); (to)[(y * s2->w) + x] = D_rgbaToFormat(s2->format, r, g, b, a);}
+
 //#define D_D_SCSPIXEL(from, to) (to)[(y * s2->w) + x] = D_ConvertPixel(s1->format, s2->format, (from)[(((((y - r2->y) * r1->h) / r2->h) + r1->y) * s1->w) + ((((x - r2->x) * r1->w) / r2->w) + r1->x)])
 
 /*
@@ -1272,8 +1585,6 @@ int D_LineFindY(D_Point * a, D_Point * b, int x, int * y){
     if(){};
 };*/
 
-#ifdef D_ALLOW_STB_IMAGE
-
 /*
  * This loads an image using stb_image and creates a
  *  surface, which it then returns. You can free the
@@ -1287,10 +1598,10 @@ int D_LineFindY(D_Point * a, D_Point * b, int x, int * y){
  */
 D_Surf * D_LoadImage(char * path){
 
-    int w = 0, h = 0, n = 0;
     D_Surf * s = D_NULL;
 
-
+#ifdef D_ALLOW_STB_IMAGE
+    int w = 0, h = 0, n = 0;
 
     void * dat = stbi_load(path, &w, &h, &n, 4);
 
@@ -1306,11 +1617,14 @@ D_Surf * D_LoadImage(char * path){
     stbi_image_free(dat);
     dat = D_NULL;
 
+#else
 
+    //Run D_SetError() when implemented.
+
+#endif // D_ALLOW_STB_IMAGE
 
     return s;
 };
-#endif // D_ALLOW_STB_IMAGE
 
 #endif // D_ALREADY_IMPLEMENTED
 #endif // D_IMPLEMENTATION
