@@ -34,12 +34,16 @@ int main(int argc, char ** argv){
     fprintf(f, "\nchar %s[] = {", argv[3]);
 
     int x = 0, y = 0;
-    while(y < (h * 4)){
+    while(y < h){
 
         x = 0;
-        while(x < (w * 4)){
+        while(x < w){
 
-            fprintf(f, "%d", data[(y * w) + x]);
+            fprintf(f, "%d, %d, %d, %d",
+                    data[((y * 4) * w) + (x * 4)    ],
+                    data[((y * 4) * w) + (x * 4) + 1],
+                    data[((y * 4) * w) + (x * 4) + 2],
+                    data[((y * 4) * w) + (x * 4) + 3]);
 
             if(y == h - 1 && x == w - 1){
 
