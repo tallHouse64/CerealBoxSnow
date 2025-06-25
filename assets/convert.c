@@ -34,10 +34,10 @@ int main(int argc, char ** argv){
     fprintf(f, "\nchar %s[] = {", argv[3]);
 
     int x = 0, y = 0;
-    while(y < h){
+    while(y < (h * 4)){
 
         x = 0;
-        while(x < w){
+        while(x < (w * 4)){
 
             fprintf(f, "%d", data[(y * w) + x]);
 
