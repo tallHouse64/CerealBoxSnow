@@ -7,6 +7,8 @@
 #define D_PLATFORM_IMPLEMENTATION
 #include"platform/sdld.h"
 
+#include"assets/font.h"
+
 #define DELAY 1000/30
 #define MAX_PRTS 4096
 
@@ -33,6 +35,7 @@ int mouseReleased = 0;
 D_Point mouse = {0};
 int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
+D_Surf * font = D_NULL;
 
 //Linear congruential generator (almost)
 int rng(){
@@ -272,6 +275,7 @@ int updatePhysics(){
 int main(){
 
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", 0);
+    font = D_CreateSurfFrom(fontDataW, fontDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), fontData);
 
     setGameType(GAME_TYPE_SNOW);
 
@@ -321,6 +325,8 @@ int main(){
             //drawGameTypeButtonLeft();
             drawGameTypeButtonRight();
         };
+
+        //D_SurfCopyScale(font, D_NULL, out, D_NULL);
 
         D_FlipOutSurf(out);
 
