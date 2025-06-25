@@ -12,7 +12,7 @@ int main(int argc, char ** argv){
     };
 
     int w = 0, h = 0, n = 0;
-    unsigned char * data = stbi_load(argv[1], &w, &h, &n, 0);
+    unsigned char * data = stbi_load(argv[1], &w, &h, &n, 4);
     if(!data){
         printf("Couldn't open the image file.\n");
     };
