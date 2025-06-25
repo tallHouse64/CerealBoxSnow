@@ -19,9 +19,17 @@ int main(int argc, char ** argv){
 
     FILE * f = fopen(argv[2], "w");
 
+    fprintf(f, "/*\n");
+    fprintf(f, " * Don't edit this file, it is generated.\n");
+    fprintf(f, " * Please read note.txt and use the ./convert\n");
+    fprintf(f, " * command instead.\n");
+    fprintf(f, " */\n");
 
     fprintf(f, "\n#ifndef IMAGE_%s_H\n", argv[3]);
     fprintf(f,   "#define IMAGE_%s_H\n", argv[3]);
+
+    fprintf(f, "\nint %sW = %d;\n", argv[3], w);
+    fprintf(f,   "int %sH = %d;\n", argv[3], h);
 
     fprintf(f, "\nchar %s[] = {", argv[3]);
 
