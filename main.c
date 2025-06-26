@@ -168,27 +168,62 @@ int drawIntro(){
     };
 
     introFrameCount++;
-    printf("introFrameCount %d\n", introFrameCount);
+    //printf("introFrameCount %d\n", introFrameCount);
 
-    if(introFrameCount * DELAY > 3000){
+    D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75};
+    D_Point p = {r.x + 10, r.y + 10};
 
-        if(font->alphaMod > 64){
-            font->alphaMod -= 64;
-        }else{
-            font->alphaMod = 0;
+    //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
+
+    if(introFrameCount * DELAY < 3000){
+        //This starts at 0 sec and ends at 3 sec
+
+        D_PrintToSurf(out, font, &p, 20, 0, "Cereal Box");
+        p.y += 25;
+        D_PrintToSurf(out, font, &p, 20, 0, "Snow");
+
+        //Fade out after 2.5 sec
+        if(introFrameCount * DELAY > 2500){
+
+            if(font->alphaMod > 64){
+                font->alphaMod -= 64;
+            }else{
+                font->alphaMod = 0;
+            };
+
+        };
+
+    }else if(introFrameCount * DELAY < 6000){
+        //This starts at 3 sec and ends at 6 sec
+
+        D_PrintToSurf(out, font, &p, 20, 0, "Powered by");
+        p.y += 25;
+        D_PrintToSurf(out, font, &p, 20, 0, "Drws lib");
+
+        //Fade in starting at 3 sec, stop at 3.5 sec
+        if(introFrameCount * DELAY < 3500){
+
+            if(font->alphaMod < 191){
+                font->alphaMod += 64;
+            }else{
+                font->alphaMod = 255;
+            };
+
+        };
+
+        if(introFrameCount * DELAY > 5500){
+
+            if(font->alphaMod > 64){
+                font->alphaMod -= 64;
+            }else{
+                font->alphaMod = 0;
+            };
+
         };
 
     };
 
-    //A nicely centered rect
-    //D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 85, 300, 170};
-    D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75};
-    //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
-
-    D_Point p = {r.x + 10, r.y + 10};
-    D_PrintToSurf(out, font, &p, 20, 0, "Cereal Box");
-    p.y += 25;
-    D_PrintToSurf(out, font, &p, 20, 0, "Snow");
+    return 0;
 };
 
 int draw(){
