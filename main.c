@@ -38,7 +38,7 @@ int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
 int introFrameCount = 0;
 D_Surf * font = D_NULL;
-//D_Surf * drwslib = D_NULL;
+D_Surf * drwslib = D_NULL;
 
 //Linear congruential generator (almost)
 int rng(){
@@ -163,6 +163,7 @@ int drawIntro(){
 
             //This runs once after the intro
             font->alphaMod = 255;
+            drwslib->alphaMod = 255;
             introFrameCount = -1;
         };
 
@@ -177,7 +178,7 @@ int drawIntro(){
 
     D_Rect drwslibRect = {r.x + 10, r.y + 10, 55, 55};
 
-    D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
+    //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
 
     if(introFrameCount * DELAY < 3000){
         //This starts at 0 sec and ends at 3 sec
@@ -197,10 +198,12 @@ int drawIntro(){
 
         };
 
+        drwslib->alphaMod = 0;
+
     }else if(introFrameCount * DELAY < 6000){
         //This starts at 3 sec and ends at 6 sec
 
-        //D_SurfCopyScale();
+        D_SurfCopyScale(drwslib, D_NULL, out, &drwslibRect);
 
         p.x += 65;
         D_PrintToSurf(out, font, &p, 20, 0, "Powered by");
@@ -212,8 +215,10 @@ int drawIntro(){
 
             if(font->alphaMod < 191){
                 font->alphaMod += 64;
+                drwslib->alphaMod += 64;
             }else{
                 font->alphaMod = 255;
+                drwslib->alphaMod = 255;
             };
 
         };
@@ -222,8 +227,10 @@ int drawIntro(){
 
             if(font->alphaMod > 64){
                 font->alphaMod -= 64;
+                drwslib->alphaMod -= 64;
             }else{
                 font->alphaMod = 0;
+                drwslib->alphaMod = 0;
             };
 
         };
@@ -357,6 +364,7 @@ int main(){
 
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", 0);
     font = D_CreateSurfFrom(fontDataW, fontDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), fontData);
+    drwslib = D_CreateSurfFrom(drwslibDataW, drwslibDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), drwslibData);
 
     setGameType(GAME_TYPE_SNOW);
 
