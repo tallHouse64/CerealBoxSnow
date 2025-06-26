@@ -35,6 +35,7 @@ int mouseReleased = 0;
 D_Point mouse = {0};
 int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
+int introFrameCount = 0;
 D_Surf * font = D_NULL;
 
 //Linear congruential generator (almost)
@@ -151,6 +152,44 @@ int drawGameTypeButtonRight(){
 
     D_FillRect(out, &b, D_rgbaToFormat(out->format, 200, 170, 160, 255));
 };*/
+
+int drawIntro(){
+
+    if(introFrameCount * DELAY > 10000 || introFrameCount == -1){ //After about 10 sec dont't draw
+
+        if(introFrameCount != -1){
+
+            //This runs once after the intro
+            font->alphaMod = 255;
+            introFrameCount = -1;
+        };
+
+        return 0;
+    };
+
+    introFrameCount++;
+    printf("introFrameCount %d\n", introFrameCount);
+
+    if(introFrameCount * DELAY > 3000){
+
+        if(font->alphaMod > 64){
+            font->alphaMod -= 64;
+        }else{
+            font->alphaMod = 0;
+        };
+
+    };
+
+    //A nicely centered rect
+    //D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 85, 300, 170};
+    D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75};
+    //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
+
+    D_Point p = {r.x + 10, r.y + 10};
+    D_PrintToSurf(out, font, &p, 20, 0, "Cereal Box");
+    p.y += 25;
+    D_PrintToSurf(out, font, &p, 20, 0, "Snow");
+};
 
 int draw(){
     D_FillRect(out, D_NULL, D_rgbaToFormat(out->format, 20, 20, 20, 255));
@@ -326,7 +365,7 @@ int main(){
             drawGameTypeButtonRight();
         };
 
-        //D_SurfCopyScale(font, D_NULL, out, D_NULL);
+        drawIntro();
 
         D_FlipOutSurf(out);
 
