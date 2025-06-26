@@ -8,6 +8,7 @@
 #include"platform/sdld.h"
 
 #include"assets/font.h"
+#include"assets/drwslib.h"
 
 #define DELAY 1000/30
 #define MAX_PRTS 4096
@@ -37,6 +38,7 @@ int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
 int introFrameCount = 0;
 D_Surf * font = D_NULL;
+//D_Surf * drwslib = D_NULL;
 
 //Linear congruential generator (almost)
 int rng(){
@@ -173,7 +175,9 @@ int drawIntro(){
     D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75};
     D_Point p = {r.x + 10, r.y + 10};
 
-    //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
+    D_Rect drwslibRect = {r.x + 10, r.y + 10, 55, 55};
+
+    D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
 
     if(introFrameCount * DELAY < 3000){
         //This starts at 0 sec and ends at 3 sec
@@ -196,6 +200,9 @@ int drawIntro(){
     }else if(introFrameCount * DELAY < 6000){
         //This starts at 3 sec and ends at 6 sec
 
+        //D_SurfCopyScale();
+
+        p.x += 65;
         D_PrintToSurf(out, font, &p, 20, 0, "Powered by");
         p.y += 25;
         D_PrintToSurf(out, font, &p, 20, 0, "Drws lib");
