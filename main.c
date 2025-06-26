@@ -176,7 +176,7 @@ int drawIntro(){
     D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75};
     D_Point p = {r.x + 10, r.y + 10};
 
-    D_Rect drwslibRect = {r.x + 10, r.y + 10, 55, 55};
+    D_Rect drwslibRect = {r.x + 10, r.y + 10, 56, 56};
 
     //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
 
