@@ -7,3 +7,4 @@ To make Cereal Box Snow as portable as possible,
 
 Commands used to update header files from images:
  ./convert font.png font.h fontData
+ ./convert drws-lib.png drwslib.h drwslib
