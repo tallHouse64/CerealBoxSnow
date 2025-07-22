@@ -360,7 +360,7 @@ int updatePhysics(){
     };
 };
 
-int main(){
+int main(int argc, char ** argv){
 
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", 0);
     font = D_CreateSurfFrom(fontDataW, fontDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), fontData);
