@@ -1,4 +1,8 @@
 
-cbsnow*
+cbsnow
+cbsnow.exe
 rng/rngtest
 assets/convert
+
+#Ignore the nds build
+cbsnownds

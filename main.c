@@ -5,7 +5,12 @@
 #include"devents.h"
 
 #define D_PLATFORM_IMPLEMENTATION
+
+#ifdef NDS
+#include"platform/ndsd.h"
+#else
 #include"platform/sdld.h"
+#endif
 
 #include"assets/font.h"
 #include"assets/drwslib.h"
