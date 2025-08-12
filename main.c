@@ -162,6 +162,18 @@ int drawGameTypeButtonRight(){
 
 int drawIntro(){
 
+    /* The number in textSize controls more than
+     *  just the size of the text, it also
+     *  controls the size of the entire intro
+     *  text and logo ("Cereal Box Snow" and
+     *  "Powered by drws lib").
+     */
+#ifdef NDS
+    const int textSize = 10;
+#else
+    const int textSize = 20;
+#endif
+
     if(introFrameCount * DELAY > 10000 || introFrameCount == -1){ //After about 10 sec dont't draw
 
         if(introFrameCount != -1){
@@ -178,19 +190,20 @@ int drawIntro(){
     introFrameCount++;
     //printf("introFrameCount %d\n", introFrameCount);
 
-    D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75};
+    //D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75}; //The original rectangle
+    D_Rect r = {(out->w / 2) - ((textSize * 15) / 2), (out->h / 2) - ((textSize * 4) / 2), textSize * 15, textSize * 4};
     D_Point p = {r.x + 10, r.y + 10};
 
-    D_Rect drwslibRect = {r.x + 10, r.y + 10, 56, 56};
+    D_Rect drwslibRect = {r.x + 10, r.y + 10, (textSize * 3) - 4, (textSize * 3) - 4};
 
     //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
 
     if(introFrameCount * DELAY < 3000){
         //This starts at 0 sec and ends at 3 sec
 
-        D_PrintToSurf(out, font, &p, 20, 0, "Cereal Box");
-        p.y += 25;
-        D_PrintToSurf(out, font, &p, 20, 0, "Snow");
+        D_PrintToSurf(out, font, &p, textSize, 0, "Cereal Box");
+        p.y += textSize + 5;
+        D_PrintToSurf(out, font, &p, textSize, 0, "Snow");
 
         //Fade out after 2.5 sec
         if(introFrameCount * DELAY > 2500){
@@ -210,10 +223,10 @@ int drawIntro(){
 
         D_SurfCopyScale(drwslib, D_NULL, out, &drwslibRect);
 
-        p.x += 65;
-        D_PrintToSurf(out, font, &p, 20, 0, "Powered by");
-        p.y += 25;
-        D_PrintToSurf(out, font, &p, 20, 0, "Drws lib");
+        p.x += drwslibRect.w + 10;
+        D_PrintToSurf(out, font, &p, textSize, 0, "Powered by");
+        p.y += textSize + 5;
+        D_PrintToSurf(out, font, &p, textSize, 0, "Drws lib");
 
         //Fade in starting at 3 sec, stop at 3.5 sec
         if(introFrameCount * DELAY < 3500){
