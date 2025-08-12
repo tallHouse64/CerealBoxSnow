@@ -110,8 +110,14 @@ void setGameType(enum gameType_t nextType){
 };
 
 int drawPrtSlider(){
+#ifdef NDS
+    const int sliderHeight = 170;
+#else
+    const int sliderHeight = 200;
+#endif
+
     //s for the slider itself
-    D_Rect s = {out->w - 20, out->h - 210, 10, 200};
+    D_Rect s = {out->w - 20, out->h - (sliderHeight + 10), 10, sliderHeight};
 
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
 
