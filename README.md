@@ -13,6 +13,28 @@ It can simulate two things:
 - Snow
 - Fire
 
+## Supported platforms
+
+Cereal Box Snow supports:
+- Windows
+- Linux
+
+NDS support is planned for the next release. You can compile the nds build now by running "make cbsnownds" and finding the executable in the cbsnownds folder. You do need the devkitpro nds tools and "make" installed to do this.
+
+## How to compile
+
+To compile this you do need to be comfortable using a terminal, extracting zip files and know how to use the "cd" command.
+
+Windows:
+You need to install:
+- msys2 (https://www.msys2.org/)
+- gcc (inside msys2)
+- make (inside msys2)
+
+Then you can download a copy of the source code (https://github.com/tallHouse64/CerealBoxSnow/releases/latest download the zip file).
+
+Extract the zip file anywhere and open msys2 ucrt64 terminal. Then navigate to the folder with the "cd" command and run "make".
+
 ## Dependencies
 This program uses Drws-lib for graphics, input and output. Drws-lib uses SDL2 as an optional dependency.
 
