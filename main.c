@@ -8,6 +8,7 @@
 
 #ifdef NDS
 #include"platform/ndsd.h"
+#include<nds.h>
 #else
 #include"platform/sdld.h"
 #endif
@@ -122,7 +123,11 @@ int drawPrtSlider(){
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
 
     if(D_PointInRect(&mouse, &s) && mouseDown){
-        //The number (mouse.y - s.y) is assumed to be between 0 and 199
+
+        /* The number (mouse.y - s.y) is assumed
+         *  to be between 0 and 199, on nds it
+         *  would be between 0 and 170.
+         */
 
         prtsInUse = (((mouse.y - s.y) * MAX_PRTS) / (s.h - 1));
         //printf("prtsInUse: %d\n", prtsInUse);
@@ -443,7 +448,11 @@ int main(int argc, char ** argv){
 
         D_FlipOutSurf(out);
 
+#ifdef NDS
+        swiWaitForVBlank();
+#else
         D_Delay(DELAY);
+#endif
     };
 
     D_StopEvents();
