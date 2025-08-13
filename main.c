@@ -34,8 +34,6 @@ D_Surf * out = D_NULL;
 D_Event e;
 int running = 1;
 int prtsInUse = 100;
-int prtW = 10;
-int prtH = 10;
 int mouseDown = 0; //This is mouse button state
 int mousePressed = 0;
 int mouseReleased = 0;
@@ -45,6 +43,16 @@ int framesSinceMouseEvent = 0;
 int introFrameCount = 0;
 D_Surf * font = D_NULL;
 D_Surf * drwslib = D_NULL;
+
+#ifdef NDS
+/*Make the snow 4 by 4 pixels on DS*/
+const int prtW = 4;
+const int prtH = 4;
+#else
+/*Make the snow 10 by 10 pixels on PC*/
+const int prtW = 10;
+const int prtH = 10;
+#endif
 
 //Linear congruential generator (almost)
 int rng(){
@@ -356,12 +364,12 @@ int draw(){
 };
 
 void updateSnowPrt(struct prt_t * p){
-    p->y += (rng() % 10) + 5;
+    p->y += (rng() % prtW) + (prtW / 2);
 
     if((rng() % 2) == 1){
-        p->x += 10;
+        p->x += prtW;
     }else{
-        p->x -= 10;
+        p->x -= prtW;
     };
 
     //If the particle is off the left teleport it to the right
@@ -385,7 +393,7 @@ void updateFirePrt(struct prt_t * p){
     int respawn = 0;
 
     //Move the particle down
-    p->y -= (rng() % 10) + 5;
+    p->y -= (rng() % prtW) + (prtW / 2);
 
     //Another way of moving the particle down
     /*p->y -= (rng() % 7) - 1;
@@ -393,9 +401,9 @@ void updateFirePrt(struct prt_t * p){
 
     //Move left or right randomly
     if((rng() % 2) == 1){
-        p->x += (rng() % 15) + 5;
+        p->x += (rng() % (prtW + (prtW >> 1))) + (prtW >> 1);
     }else{
-        p->x -= (rng() % 15) + 5;
+        p->x -= (rng() % (prtW + (prtW >> 1))) + (prtW >> 1);
     };
 
     //Make it more transparent randomly
@@ -422,7 +430,7 @@ void updateFirePrt(struct prt_t * p){
 
     if(respawn){
         p->x = ((out->w / 2) - (prtW / 2)) + ((rng() % 20) - 5);
-        p->y = ((out->h - prtH) - 20);
+        p->y = ((out->h - prtH) - (prtW * 2));
 
         p->r = 255;
         p->g = (rng() % 20) + 236; //(rng() % 220) + 35; //used to be 83
