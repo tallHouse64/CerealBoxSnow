@@ -173,6 +173,9 @@ int drawGameTypeButtonRight(){
 
 int drawIntro(){
 
+    static D_Surf * intro1 = D_NULL;
+    static D_Surf * intro2 = D_NULL;
+
     /* The number in textSize controls more than
      *  just the size of the text, it also
      *  controls the size of the entire intro
@@ -193,6 +196,16 @@ int drawIntro(){
             font->alphaMod = 255;
             drwslib->alphaMod = 255;
             introFrameCount = -1;
+
+            if(intro1 != D_NULL){
+                D_FreeSurf(intro1);
+                intro1 = D_NULL;
+            };
+
+            if(intro2 != D_NULL){
+                D_FreeSurf(intro2);
+                intro2 = D_NULL;
+            };
         };
 
         return 0;
@@ -203,63 +216,115 @@ int drawIntro(){
 
     //D_Rect r = {(out->w / 2) - 150, (out->h / 2) - 38, 300, 75}; //The original rectangle
     D_Rect r = {(out->w / 2) - ((textSize * 15) / 2), (out->h / 2) - ((textSize * 4) / 2), textSize * 15, textSize * 4};
-    D_Point p = {r.x + 10, r.y + 10};
+    D_Point p = {r.x + 10, r.y + 100};
+    //D_Rect drwslibRect = {r.x + 10, r.y + 10, (textSize * 3) - 4, (textSize * 3) - 4}; //Old rect, relative to the window top left
+    D_Rect drwslibRect = {10, 10, (textSize * 3) - 4, (textSize * 3) - 4};
 
-    D_Rect drwslibRect = {r.x + 10, r.y + 10, (textSize * 3) - 4, (textSize * 3) - 4};
+    if(introFrameCount == 1){ /*This runs once.*/
+
+
+#ifdef NDS
+        intro1 = D_CreateSurf(r.w, r.h, D_FindPixFormat(0x001F, 0x03E0, 0x7C00, 0x8000, 16));
+        intro2 = D_CreateSurf(r.w, r.h, D_FindPixFormat(0x001F, 0x03E0, 0x7C00, 0x8000, 16));
+        D_FillRect(intro1, D_NULL, D_rgbaToFormat(intro1->format, 30, 30, 30, 255));
+        D_FillRect(intro2, D_NULL, D_rgbaToFormat(intro2->format, 30, 30, 30, 255));
+#else
+        intro1 = D_CreateSurf(r.w, r.h, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32));
+        intro2 = D_CreateSurf(r.w, r.h, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32));
+#endif
+        /*Make the first part of the intro "Cereal Box Snow"*/
+        D_Point introP = {10, 10};
+
+        D_PrintToSurf(intro1, font, &introP, textSize, 0, "Cereal Box");
+        introP.y += textSize + 5;
+        D_PrintToSurf(intro1, font, &introP, textSize, 0, "Snow");
+
+
+
+        /*Make the second part of the intro "Powered By Drws lib"*/
+        introP.x = 10;
+        introP.y = 10;
+
+        D_SurfCopyScale(drwslib, D_NULL, intro2, &drwslibRect);
+        introP.x += drwslibRect.w + 10;
+        D_PrintToSurf(intro2, font, &introP, textSize, 0, "Powered by");
+        introP.y += textSize + 5;
+        D_PrintToSurf(intro2, font, &introP, textSize, 0, "Drws lib");
+    };
+
 
     //D_FillRect(out, &r, D_rgbaToFormat(out->format, 0, 0, 0, 255));
 
     if(introFrameCount * DELAY < 3000){
         //This starts at 0 sec and ends at 3 sec
 
-        D_PrintToSurf(out, font, &p, textSize, 0, "Cereal Box");
-        p.y += textSize + 5;
-        D_PrintToSurf(out, font, &p, textSize, 0, "Snow");
+#ifdef NDS
+
+        /* The below 5 lines are an optimisation
+         *  for DS that does the same thing as
+         *  the line
+         *  "D_SurfCopyScale(intro1, D_NULL, out, &r);"
+         */
+        int i = 0;
+        while(i < intro1->h){
+            dmaCopyWords(0, ((char *)(intro1->pix)) + (i * intro1->w * 2), (((char *)(out->pix)) + (i * out->w * 2)) + (r.x * 2) + (r.y * out->w * 2), intro1->w * 2);
+            i++;
+        };
+#else
+        D_SurfCopyScale(intro1, D_NULL, out, &r);
+#endif
 
         //Fade out after 2.5 sec
         if(introFrameCount * DELAY > 2500){
 
-            if(font->alphaMod > 64){
-                font->alphaMod -= 64;
+            if(intro1->alphaMod > 64){
+                intro1->alphaMod -= 64;
             }else{
-                font->alphaMod = 0;
+                intro1->alphaMod = 0;
             };
 
         };
 
-        drwslib->alphaMod = 0;
+        intro2->alphaMod = 0;
 
     }else if(introFrameCount * DELAY < 6000){
         //This starts at 3 sec and ends at 6 sec
 
-        D_SurfCopyScale(drwslib, D_NULL, out, &drwslibRect);
+        //D_SurfCopyScale(intro2, D_NULL, out, &r);
+#ifdef NDS
 
-        p.x += drwslibRect.w + 10;
-        D_PrintToSurf(out, font, &p, textSize, 0, "Powered by");
-        p.y += textSize + 5;
-        D_PrintToSurf(out, font, &p, textSize, 0, "Drws lib");
+        /* The below 5 lines are an optimisation
+         *  for DS that does the same thing as
+         *  the line
+         *  "D_SurfCopyScale(intro2, D_NULL, out, &r);"
+         */
+        int i = 0;
+        while(i < intro2->h){
+            dmaCopyWords(0, ((char *)(intro2->pix)) + (i * intro2->w * 2), (((char *)(out->pix)) + (i * out->w * 2)) + (r.x * 2) + (r.y * out->w * 2), intro2->w * 2);
+            i++;
+        };
+#else
+        D_SurfCopyScale(intro2, D_NULL, out, &r);
+#endif
 
         //Fade in starting at 3 sec, stop at 3.5 sec
         if(introFrameCount * DELAY < 3500){
 
-            if(font->alphaMod < 191){
-                font->alphaMod += 64;
-                drwslib->alphaMod += 64;
+            if(intro2->alphaMod < 191){
+                intro2->alphaMod += 64;
             }else{
-                font->alphaMod = 255;
-                drwslib->alphaMod = 255;
+                intro2->alphaMod = 255;
             };
 
         };
 
+        //Fade out at 5.5 sec
         if(introFrameCount * DELAY > 5500){
 
-            if(font->alphaMod > 64){
-                font->alphaMod -= 64;
-                drwslib->alphaMod -= 64;
+            if(intro2->alphaMod > 64){
+                intro2->alphaMod -= 64;
             }else{
-                font->alphaMod = 0;
-                drwslib->alphaMod = 0;
+                intro2->alphaMod = 0;
             };
 
         };
