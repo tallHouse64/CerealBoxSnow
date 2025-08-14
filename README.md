@@ -21,6 +21,10 @@ Cereal Box Snow supports:
 - Linux
 - Nintendo DS
 
+## How to install
+
+First download Cereal Box Snow from the releases page (https://github.com/tallHouse64/CerealBoxSnow/releases/latest). Then extract the zip file to anywhere and double click the executable (for Windows that is "cbsnow.exe").
+
 ## How to compile
 
 To compile this you do need to be comfortable using a terminal, extracting zip files and know how to use the "cd" command.
