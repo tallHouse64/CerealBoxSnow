@@ -2,8 +2,9 @@
 This is a snow sim. It can simulate pixel art style snow and fire.
 
 ## Screenshots
-<img src="https://github.com/tallHouse64/CerealBoxSnow/blob/main/screenshot1.png?raw=true" width="428" alt="A screenshot of Cereal Box Snow working."/>
-<img src="https://github.com/tallHouse64/CerealBoxSnow/blob/main/screenshot2.png?raw=true" width="428" alt="Another screenshot of Cereal Box Snow working."/>
+<img src="https://github.com/tallHouse64/CerealBoxSnow/blob/main/screenshot1.png?raw=true" width="428" alt="A screenshot of Cereal Box Snow simulating snow."/>
+<img src="https://github.com/tallHouse64/CerealBoxSnow/blob/main/screenshot2.png?raw=true" width="428" alt="Another screenshot of Cereal Box Snow simulating snow with the UI shown."/>
+<img src="https://github.com/tallHouse64/CerealBoxSnow/blob/main/screenshot3.png?raw=true" width="428" alt="A screenshot of Cereal Box Snow's fire simulation."/>
 
 ## Features
 This program doesn't have many features.
