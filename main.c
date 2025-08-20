@@ -22,11 +22,13 @@
 enum gameType_t {
     GAME_TYPE_SNOW = 0,
     GAME_TYPE_FIRE,
+    GAME_TYPE_RAIN,
     NUM_GAME_TYPES
 } gameType = GAME_TYPE_SNOW;
 
 struct prt_t{
     int x, y;
+    int xSpeed, ySpeed;
     int r, g, b, a;
 } prts[MAX_PRTS];
 
@@ -110,6 +112,21 @@ void setGameType(enum gameType_t nextType){
                 /*if(i % 12 == 0){
                     prts[i].x += (rng() % 40) - 20;
                 };*/
+            };
+
+            break;
+        case GAME_TYPE_RAIN:
+
+            for(int i = 0; i < MAX_PRTS; i++){
+                prts[i].r = 35;
+                prts[i].g = 83;
+                prts[i].b = 255;
+                prts[i].a = 255;
+
+                prts[i].ySpeed = (rng() % 30) + 20;
+
+                prts[i].x = (rng() + (rng2() % 100)) % out->w;
+                prts[i].y = -((rng() % out->h) + (rng2() % 500));
             };
 
             break;
@@ -445,6 +462,35 @@ void updateFirePrt(struct prt_t * p){
     };
 };
 
+void updateRainPrt(struct prt_t * p){
+
+    p->y += p->ySpeed;
+
+    /*If the particle has reached the bottom:*/
+    if(p->y > out->h){
+
+        /*Respawn at the top (teleport).*/
+        p->y = (0 - prtH) - (rng() % 30);
+
+        /*Wander the particle randomly left or right*/
+        p->x = p->x + ((rng() % 11) - 5);
+
+        /*If the particle wanders too far left:*/
+        if(p->x < -prtW){
+            /*Teleport it to the right of the screen.*/
+            p->x = p->x + out->w;
+        };
+
+        /*If the particle wanders too far right:*/
+        if(p->y > out->w){
+            /*Teleport it to the left of the screen.*/
+            p->x = p->x - out->w;
+        };
+    };
+
+    return;
+};
+
 int updatePhysics(){
     int i = 0;
     while(i < prtsInUse){
@@ -455,6 +501,9 @@ int updatePhysics(){
                 break;
             case GAME_TYPE_FIRE:
                 updateFirePrt(&prts[i]);
+                break;
+            case GAME_TYPE_RAIN:
+                updateRainPrt(&prts[i]);
                 break;
         };
 
