@@ -513,7 +513,7 @@ int updatePhysics(){
 
 int main(int argc, char ** argv){
 
-    out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", 0);
+    out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", D_OUTSURFRESIZABLE);
     font = D_CreateSurfFrom(fontDataW, fontDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), fontData);
     drwslib = D_CreateSurfFrom(drwslibDataW, drwslibDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), drwslibData);
 
@@ -546,6 +546,11 @@ int main(int argc, char ** argv){
                     mouseDown = 1;
                     mousePressed = 1;
                     framesSinceMouseEvent = 0;
+                    break;
+
+                case D_OUTSURFRESIZE:
+                    out = D_GetResizedOutSurf(out);
+                    setGameType(gameType); /*Reset the simulation.*/
                     break;
 
                 case D_QUIT:
