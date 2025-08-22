@@ -26,6 +26,13 @@ enum gameType_t {
     NUM_GAME_TYPES
 } gameType = GAME_TYPE_SNOW;
 
+enum mouseFocus_t {
+    MOUSE_FOCUS_NONE = 0,
+    MOUSE_FOCUS_SLIDER,
+    MOUSE_FOCUS_GAME_TYPE_BUTTON_RIGHT,
+    MOUSE_FOCUS_BACKGROUND
+} mouseFocus = MOUSE_FOCUS_NONE;
+
 struct prt_t{
     int x, y;
     int xSpeed, ySpeed;
@@ -147,22 +154,29 @@ int drawPrtSlider(){
 
     D_FillRect(out, &s, D_rgbaToFormat(out->format, 150, 130, 120, 255));
 
-    if(D_PointInRect(&mouse, &s) && mouseDown){
+    if((D_PointInRect(&mouse, &s) && mouseDown && mouseFocus == MOUSE_FOCUS_NONE) || (mouseDown && mouseFocus == MOUSE_FOCUS_SLIDER)){
 
-        /* The number (mouse.y - s.y) is assumed
-         *  to be between 0 and 199, on nds it
-         *  would be between 0 and 170.
+        /*If clicking the slider here does not
+         * make the number of particles less than
+         * 0 or more than MAX_PRTS:
          */
+        if(mouse.y - s.y >= 0 && mouse.y - s.y < sliderHeight){
+            /*Change the number of particles*/
+            prtsInUse = (((mouse.y - s.y) * MAX_PRTS) / (s.h - 1));
+        };
 
-        prtsInUse = (((mouse.y - s.y) * MAX_PRTS) / (s.h - 1));
         //printf("prtsInUse: %d\n", prtsInUse);
+
+        mouseFocus = MOUSE_FOCUS_SLIDER;
     };
 
 
     //The box is the slider handle
     D_Rect box = {s.x, 0, s.w, s.w};
 
-    //(prtsInUse / MAX_PRTS) * (s.h / 1)
+    /*Draw the slider handle with it's height
+     * lowered according to prtsInUse.
+     */
     box.y = (s.y + ((prtsInUse * s.h) / MAX_PRTS)) - (box.h / 2);
     D_FillRect(out, &box, D_rgbaToFormat(out->format, 200, 170, 160, 255));
 };
@@ -511,6 +525,56 @@ int updatePhysics(){
     };
 };
 
+void attractPrts(int x, int y){
+    int i = 0;
+    int squaredDistance = 0;
+    /*int numPrtsAffected = 0;*/
+    int moveSpeed = prtW * 2; /*Think of this as the attraction force.*/
+    while(i < MAX_PRTS){
+        //prts[i].y = prts[i].y + 20;
+
+        squaredDistance = ((x - prts[i].x) * (x - prts[i].x)) + ((y - prts[i].y) * (y - prts[i].y));
+        //printf("squaredDistance: %d\n", squaredDistance);
+
+        /*if(squaredDistance != 0 && (5000 / squaredDistance) != 0){
+            numPrtsAffected++;
+            prts[i].x = x + ((x - prts[i].x) / (5000 / squaredDistance));
+            prts[i].y = y + ((y - prts[i].y) / (5000 / squaredDistance));
+        };*/
+
+        /*If the particle is within 100 pixels of
+         * the x,y point: (100 pixels for PC)*/
+        if(squaredDistance < (prtW * 10 * prtW * 10)){
+            /*numPrtsAffected++;*/
+
+            /*If the particle is to the left:*/
+            if(prts[i].x < x){
+                /*Move it right*/
+                prts[i].x = prts[i].x + moveSpeed;
+
+            /*If the particle is to the right:*/
+            }else if(prts[i].x > x){
+                /*Move it left*/
+                prts[i].x = prts[i].x - moveSpeed;
+            };
+
+            /*If the particle is above:*/
+            if(prts[i].y < y){
+                /*Move it down*/
+                prts[i].y = prts[i].y + moveSpeed;
+
+            /*If the particle is below:*/
+            }else if(prts[i].y > y){
+                /*Move it up*/
+                prts[i].y = prts[i].y - moveSpeed;
+            };
+        };
+
+        i++;
+    };
+    /*printf("numPrtsAffected %d\n", numPrtsAffected);*/
+};
+
 int main(int argc, char ** argv){
 
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", D_OUTSURFRESIZABLE);
@@ -546,6 +610,7 @@ int main(int argc, char ** argv){
                     mouseDown = 1;
                     mousePressed = 1;
                     framesSinceMouseEvent = 0;
+                    mouseFocus = MOUSE_FOCUS_NONE;
                     break;
 
                 case D_OUTSURFRESIZE:
@@ -569,6 +634,12 @@ int main(int argc, char ** argv){
             drawPrtSlider();
             //drawGameTypeButtonLeft();
             drawGameTypeButtonRight();
+        };
+
+        /*Move particles on mouse click.*/
+        if(mouseDown && (mouseFocus == MOUSE_FOCUS_NONE || mouseFocus == MOUSE_FOCUS_BACKGROUND)){
+            mouseFocus = MOUSE_FOCUS_BACKGROUND;
+            attractPrts(mouse.x, mouse.y);
         };
 
         drawIntro();
