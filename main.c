@@ -529,11 +529,20 @@ int updatePhysics(){
     };
 };
 
-void attractPrts(int x, int y){
+/* This function attracts particles toward a
+ *  point if they are close enough.
+ *
+ * The recommended move speed is prtW * 2.
+ *
+ * x: The x position the particles move to.
+ * y: The y position the particles move to.
+ * moveSpeed: The speed that particles move
+ *  toward the point (pixels per frame).
+ */
+void attractPrts(int x, int y, int moveSpeed){
     int i = 0;
     int squaredDistance = 0;
     /*int numPrtsAffected = 0;*/
-    int moveSpeed = prtW * 2; /*Think of this as the attraction force.*/
     while(i < MAX_PRTS){
         //prts[i].y = prts[i].y + 20;
 
@@ -643,7 +652,7 @@ int main(int argc, char ** argv){
         /*Move particles on mouse click.*/
         if(mouseDown && (mouseFocus == MOUSE_FOCUS_NONE || mouseFocus == MOUSE_FOCUS_BACKGROUND)){
             mouseFocus = MOUSE_FOCUS_BACKGROUND;
-            attractPrts(mouse.x, mouse.y);
+            attractPrts(mouse.x, mouse.y, prtW * 2);
         };
 
         drawIntro();
