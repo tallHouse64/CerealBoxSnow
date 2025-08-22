@@ -184,7 +184,11 @@ int drawPrtSlider(){
 int drawGameTypeButtonRight(){
     D_Rect b = {out->w - 70, out->h - 50, 40, 40};
 
-    if(D_PointInRect(&mouse, &b) && mouseReleased){
+    if(D_PointInRect(&mouse, &b) && mousePressed && mouseFocus == MOUSE_FOCUS_NONE){
+        mouseFocus = MOUSE_FOCUS_GAME_TYPE_BUTTON_RIGHT;
+    };
+
+    if(D_PointInRect(&mouse, &b) && mouseReleased && mouseFocus == MOUSE_FOCUS_GAME_TYPE_BUTTON_RIGHT){
         setGameType((gameType + 1) % NUM_GAME_TYPES);
         //gameType += 1;
         //gameType = gameType % NUM_GAME_TYPES;
