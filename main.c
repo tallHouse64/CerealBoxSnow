@@ -502,7 +502,7 @@ void updateRainPrt(struct prt_t * p){
         };
 
         /*If the particle wanders too far right:*/
-        if(p->y > out->w){
+        if(p->x > out->w){
             /*Teleport it to the left of the screen.*/
             p->x = p->x - out->w;
         };
