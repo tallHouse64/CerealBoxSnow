@@ -51,6 +51,7 @@ D_Point mouse = {0};
 int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
 int introFrameCount = 0;
+int ndsMouseToggle = 1; /*0 for pull particles, 1 for push.*/
 D_Surf * font = D_NULL;
 D_Surf * drwslib = D_NULL;
 
@@ -642,6 +643,12 @@ int main(int argc, char ** argv){
 
         };
 
+#ifdef NDS
+        if(keysUp() & (KEY_UP | KEY_X)){
+            ndsMouseToggle = ndsMouseToggle ? 0 : 1;
+        };
+#endif
+
         updatePhysics();
 
         draw();
@@ -656,11 +663,19 @@ int main(int argc, char ** argv){
         if(mouseDown && (mouseFocus == MOUSE_FOCUS_NONE || mouseFocus == MOUSE_FOCUS_BACKGROUND)){
             mouseFocus = MOUSE_FOCUS_BACKGROUND;
 
+#ifdef NDS
+            if(ndsMouseToggle){
+                attractPrts(mouse.x, mouse.y, prtW * 2);
+            }else{
+                attractPrts(mouse.x, mouse.y, -prtW * 2);
+            };
+#else
             if(mouseButton & D_LEFTBUTTON){
                 attractPrts(mouse.x, mouse.y, prtW * 2);
             }else if(mouseButton & D_RIGHTBUTTON){
                 attractPrts(mouse.x, mouse.y, -prtW * 2);
             };
+#endif
         };
 
         drawIntro();
