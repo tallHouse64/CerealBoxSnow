@@ -493,7 +493,7 @@ void updateRainPrt(struct prt_t * p){
         p->y = (0 - prtH) - (rng() % 30);
 
         /*Wander the particle randomly left or right*/
-        p->x = p->x + ((rng() % 11) - 5);
+        p->x = p->x + ((rng() % 81) - 40);
 
         /*If the particle wanders too far left:*/
         if(p->x < -prtW){
