@@ -43,9 +43,10 @@ D_Surf * out = D_NULL;
 D_Event e;
 int running = 1;
 int prtsInUse = 100;
-int mouseDown = 0; //This is mouse button state
+int mouseDown = 0; //This acts like a bool of the mouse down state
 int mousePressed = 0;
 int mouseReleased = 0;
+D_MouseButton mouseButton = D_NOBUTTON; /*State of the mouse buttons*/
 D_Point mouse = {0};
 int framesTillUiHide = 25; //A little less than 1 sec
 int framesSinceMouseEvent = 0;
@@ -617,12 +618,14 @@ int main(int argc, char ** argv){
                     mouseDown = 0;
                     mouseReleased = 1;
                     framesSinceMouseEvent = 0;
+                    mouseButton = D_NOBUTTON;
                     break;
 
                 case D_MOUSEDOWN:
                     mouseDown = 1;
                     mousePressed = 1;
                     framesSinceMouseEvent = 0;
+                    mouseButton = e.mouse.button;
                     mouseFocus = MOUSE_FOCUS_NONE;
                     break;
 
@@ -652,7 +655,12 @@ int main(int argc, char ** argv){
         /*Move particles on mouse click.*/
         if(mouseDown && (mouseFocus == MOUSE_FOCUS_NONE || mouseFocus == MOUSE_FOCUS_BACKGROUND)){
             mouseFocus = MOUSE_FOCUS_BACKGROUND;
-            attractPrts(mouse.x, mouse.y, prtW * 2);
+
+            if(mouseButton & D_LEFTBUTTON){
+                attractPrts(mouse.x, mouse.y, prtW * 2);
+            }else if(mouseButton & D_RIGHTBUTTON){
+                attractPrts(mouse.x, mouse.y, -prtW * 2);
+            };
         };
 
         drawIntro();
