@@ -6,6 +6,7 @@
 
 #define D_PLATFORM_IMPLEMENTATION
 
+
 #ifdef NDS
 #include"platform/ndsd.h"
 #include<nds.h>
@@ -13,8 +14,15 @@
 #include"platform/sdld.h"
 #endif
 
+
+#if (defined(NDS_DEBUG)) && (defined(NDS))
+#include<stdio.h>
+#endif
+
+
 #include"assets/font.h"
 #include"assets/drwslib.h"
+
 
 #define DELAY 1000/30
 #define MAX_PRTS 4096
@@ -42,7 +50,7 @@ struct prt_t{
 D_Surf * out = D_NULL;
 D_Event e;
 int running = 1;
-int prtsInUse = 100;
+int prtsInUse = 2000;
 int mouseDown = 0; //This acts like a bool of the mouse down state
 int mousePressed = 0;
 int mouseReleased = 0;
@@ -63,6 +71,77 @@ const int prtH = 4;
 /*Make the snow 10 by 10 pixels on PC*/
 const int prtW = 10;
 const int prtH = 10;
+#endif
+
+
+/* This is an optimisation for nds that replaces
+ *  the D_FillRect() function with an equivilant
+ *  function.
+ */
+#ifdef NDS
+#define D_FillRect CB_NDS_FillRect
+
+int CB_NDS_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
+
+    D_Rect temp = {0};
+    if(rect == D_NULL){
+        temp.w = s->w;
+        temp.h = s->h;
+        rect = &temp;
+    }else{
+        D_ClipRect(0, 0, s->w, s->h, rect);
+    };
+
+    int x = rect->x;
+    int y = rect->y;
+
+    int dmaChannel = 0;
+
+    //DC_FlushRange(&col, sizeof(D_uint32));
+
+    while(y < rect->y + rect->h){
+
+        switch(D_BITDEPTHTOBYTES(s->format.bitDepth)){
+            case 4:
+                /*((D_uint32 *)(s->pix))[(y * s->w) + x] = col;*/
+                dmaFillWords(col, (void *)(((D_uint32 *)(s->pix))[(y * s->w) + x]), rect->w * 4);
+                //printf("32 bitdepth\n");
+                break;
+            case 2:
+                if(y == rect->y){
+                    while(x < rect->x + rect->w){
+                        ((D_uint16 *)(s->pix))[(y * s->w) + x] = col;
+                        x++;
+                    };
+                    x = rect->x;
+                }else{
+                    dmaCopyWords(dmaChannel, &(((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]), &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+                    //memcpy(&(((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]), &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+                    //dmaCopyWords(0, (void *)(((D_uint16 *)(s->pix))[(rect->y * s->w) + x]), (void *)(((D_uint16 *)(s->pix))[(y * s->w) + x]), 16);
+                    //(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]) = (((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]);
+                    //(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]) = D_rgbaToFormat(s->format, 255, 0, 0, 255);
+                };
+                //printf("16 bitdepth\n");
+                break;
+            case 1:
+                /*((D_uint8 *)(s->pix))[(y * s->w) + x] = col;*/
+                dmaFillHalfWords((col & 0xFF) | (col << 8), (void *)(((D_uint8 *)(s->pix))[(y * s->w) + x]), rect->w);
+                //printf("8 bitdepth\n");
+                break;
+            default:
+                //Maybe add error message here, like "bitDepth not supported."
+                //Like SDLs SDL_GetError()
+                return -1;
+                break;
+        };
+
+        y++;
+        dmaChannel = (dmaChannel + 1) % 4;
+    };
+
+    return 0;
+};
+
 #endif
 
 //Linear congruential generator (almost)
@@ -591,6 +670,15 @@ void attractPrts(int x, int y, int moveSpeed){
 };
 
 int main(int argc, char ** argv){
+
+#if (defined(NDS_DEBUG)) && (defined(NDS))
+    PrintConsole bottomScreen;
+    videoSetModeSub(MODE_0_2D);
+    vramSetBankC(VRAM_C_SUB_BG);
+    consoleInit(&bottomScreen, 3,BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
+    consoleSelect(&bottomScreen);
+    iprintf("Hello\n");
+#endif
 
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", D_OUTSURFRESIZABLE);
     font = D_CreateSurfFrom(fontDataW, fontDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), fontData);
