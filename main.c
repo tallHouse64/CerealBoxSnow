@@ -50,7 +50,7 @@ struct prt_t{
 D_Surf * out = D_NULL;
 D_Event e;
 int running = 1;
-int prtsInUse = 2000;
+int prtsInUse = 100;
 int mouseDown = 0; //This acts like a bool of the mouse down state
 int mousePressed = 0;
 int mouseReleased = 0;
@@ -92,6 +92,10 @@ int CB_NDS_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
         D_ClipRect(0, 0, s->w, s->h, rect);
     };
 
+    if(rect->w <= 0){
+        return 0;
+    };
+
     int x = rect->x;
     int y = rect->y;
 
@@ -108,7 +112,7 @@ int CB_NDS_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
                 //printf("32 bitdepth\n");
                 break;
             case 2:
-                if(y == rect->y){
+                /*if(y == rect->y){
                     while(x < rect->x + rect->w){
                         ((D_uint16 *)(s->pix))[(y * s->w) + x] = col;
                         x++;
@@ -120,7 +124,8 @@ int CB_NDS_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
                     //dmaCopyWords(0, (void *)(((D_uint16 *)(s->pix))[(rect->y * s->w) + x]), (void *)(((D_uint16 *)(s->pix))[(y * s->w) + x]), 16);
                     //(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]) = (((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]);
                     //(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]) = D_rgbaToFormat(s->format, 255, 0, 0, 255);
-                };
+                };*/
+                dmaFillHalfWords(col, &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
                 //printf("16 bitdepth\n");
                 break;
             case 1:
@@ -768,11 +773,12 @@ int main(int argc, char ** argv){
 
         drawIntro();
 
-        D_FlipOutSurf(out);
 
 #ifdef NDS
         swiWaitForVBlank();
+        D_FlipOutSurf(out);
 #else
+        D_FlipOutSurf(out);
         D_Delay(DELAY);
 #endif
     };
