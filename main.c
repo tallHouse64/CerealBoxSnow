@@ -125,7 +125,20 @@ int CB_NDS_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
                     //(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]) = (((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]);
                     //(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]) = D_rgbaToFormat(s->format, 255, 0, 0, 255);
                 };*/
-                dmaFillHalfWords(col, &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+
+                if(y == rect->y){
+                    dmaFillHalfWords(col, &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+                }else{
+                    if      (dmaBusy(0) == 0){
+                        dmaCopyHalfWordsAsynch(0, &(((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]), &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+                    }else if(dmaBusy(1) == 0){
+                        dmaCopyHalfWordsAsynch(1, &(((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]), &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+                    }else if(dmaBusy(2) == 0){
+                        dmaCopyHalfWordsAsynch(2, &(((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]), &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+                    }else{
+                        dmaCopyHalfWords(3, &(((D_uint16 *)(s->pix))[(rect->y * s->w) + rect->x]), &(((D_uint16 *)(s->pix))[(y * s->w) + rect->x]), rect->w * 2);
+                    };
+                };
                 //printf("16 bitdepth\n");
                 break;
             case 1:
