@@ -707,10 +707,6 @@ int main(int argc, char ** argv){
     iprintf("Hello\n");
 #endif
 
-#ifdef NDS
-    timerStart(1, ClockDivider_1024, NDS_TIMER_START_DATA, D_NULL);
-#endif
-
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", D_OUTSURFRESIZABLE);
     font = D_CreateSurfFrom(fontDataW, fontDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), fontData);
     drwslib = D_CreateSurfFrom(drwslibDataW, drwslibDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), drwslibData);
@@ -718,6 +714,17 @@ int main(int argc, char ** argv){
     setGameType(GAME_TYPE_SNOW);
 
     D_StartEvents();
+
+
+#ifdef NDS
+    timerStart(1, ClockDivider_1024, NDS_TIMER_START_DATA, D_NULL);
+
+#ifndef NDS_DEBUG
+    videoSetModeSub(MODE_0_2D);
+    setBackdropColorSub(D_rgbaToFormat(out->format, 20, 20, 20, 255));
+#endif
+#endif
+
 
     while(running){
         D_PumpEvents();
