@@ -10,6 +10,7 @@
 #ifdef NDS
 #include"platform/ndsd.h"
 #include<nds.h>
+#define NDS_TIMER_START_DATA 0 /*((65535) - ((BUS_CLOCK)/(1024)))*/
 #else
 #include"platform/sdld.h"
 #endif
@@ -605,6 +606,14 @@ void updateRainPrt(struct prt_t * p){
         };
     };
 
+    /* The below 3 lines are a hack to make the
+     *  rain simulation look right for the nds
+     *  build (it's too fast).
+     */
+#ifdef NDS
+    D_Delay(0);
+#endif
+
     return;
 };
 
@@ -698,6 +707,10 @@ int main(int argc, char ** argv){
     iprintf("Hello\n");
 #endif
 
+#ifdef NDS
+    timerStart(1, ClockDivider_1024, NDS_TIMER_START_DATA, D_NULL);
+#endif
+
     out = D_GetOutSurf(50, 50, 640, 480, "Cereal Box Snow", D_OUTSURFRESIZABLE);
     font = D_CreateSurfFrom(fontDataW, fontDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), fontData);
     drwslib = D_CreateSurfFrom(drwslibDataW, drwslibDataH, D_FindPixFormat(0xFF, 0xFF00, 0xFF0000, 0xFF000000, 32), drwslibData);
@@ -788,8 +801,26 @@ int main(int argc, char ** argv){
 
 
 #ifdef NDS
+        /* Force the game into 30 fps (60 fps
+         *  doesn't look right).
+         */
+        if(((timerElapsed(1) * 1000) / (BUS_CLOCK/1024)) <= 17){
+            /*iprintf("60 fps detected, forcing 30\n");*/
+            swiWaitForVBlank();
+        }else{
+            /*iprintf("30 fps or less\n");*/
+        };
+
+        /* The below iprintf() line prints the
+         *  correct number if you stop the above
+         *  if statement from running (because
+         *  timerElapsed() resets the timer).
+         */
+        /*iprintf("Frame time, ms %d\n", ((timerElapsed(1) * 1000) / (BUS_CLOCK/1024)));*/
+
         swiWaitForVBlank();
         D_FlipOutSurf(out);
+        timerElapsed(1); /*Reset the timer*/
 #else
         D_FlipOutSurf(out);
         D_Delay(DELAY);
