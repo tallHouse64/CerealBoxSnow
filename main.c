@@ -32,6 +32,7 @@ enum gameType_t {
     GAME_TYPE_SNOW = 0,
     GAME_TYPE_FIRE,
     GAME_TYPE_RAIN,
+    GAME_TYPE_BIRD,
     NUM_GAME_TYPES
 } gameType = GAME_TYPE_SNOW;
 
@@ -234,6 +235,19 @@ void setGameType(enum gameType_t nextType){
 
                 prts[i].x = (rng() + (rng2() % 100)) % out->w;
                 prts[i].y = -((rng() % out->h) + (rng2() % 500));
+            };
+
+            break;
+        case GAME_TYPE_BIRD:
+
+            for(int i = 0; i < MAX_PRTS; i++){
+                prts[i].r = 255;
+                prts[i].g = 162;
+                prts[i].b = 22;
+                prts[i].a = 255;
+
+                prts[i].xSpeed = (rng() % 21) - 10;
+                prts[i].ySpeed = (rng() % 21) - 10;
             };
 
             break;
@@ -617,6 +631,26 @@ void updateRainPrt(struct prt_t * p){
     return;
 };
 
+void updateBirdPrt(struct prt_t * p){
+
+    p->x += p->xSpeed;
+    p->y += p->ySpeed;
+
+    if(p->x < -prtW){
+        p->x = p->x + out->w;
+    }else if(p->x > out->w){
+        p->x = p->x - out->w;
+    };
+
+    if(p->y < -prtH){
+        p->y = p->y + out->h;
+    }else if(p->y > out->h){
+        p->y = p->y - out->h;
+    };
+
+    return;
+};
+
 int updatePhysics(){
     int i = 0;
     while(i < prtsInUse){
@@ -630,6 +664,9 @@ int updatePhysics(){
                 break;
             case GAME_TYPE_RAIN:
                 updateRainPrt(&prts[i]);
+                break;
+            case GAME_TYPE_BIRD:
+                updateBirdPrt(&prts[i]);
                 break;
         };
 
