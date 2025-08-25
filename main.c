@@ -246,8 +246,54 @@ void setGameType(enum gameType_t nextType){
                 prts[i].b = 22;
                 prts[i].a = 255;
 
-                prts[i].xSpeed = (rng() % 21) - 10;
                 prts[i].ySpeed = (rng() % 21) - 10;
+                prts[i].xSpeed = (10 * 10) - (prts[i].ySpeed * prts[i].ySpeed);
+
+                /* The below if-else is just a
+                 *  hack square root.
+                 *
+                 * prts[i].xSpeed should always
+                 *  be positive and between 0 and
+                 *  100.
+                 */
+                if(prts[i].xSpeed <= 1){
+                    /* Don't do anything, 0 and 1
+                     *  are thair own square
+                     *  roots.
+                     */
+                };
+                if(prts[i].xSpeed < 4){
+                    /* Root 2 and 3 gets rounded
+                     *  to 1.
+                     */
+                    prts[i].xSpeed = 1;
+                }else if(prts[i].xSpeed < 9){
+                    prts[i].xSpeed = 2;
+                }else if(prts[i].xSpeed < 16){
+                    prts[i].xSpeed = 3;
+                }else if(prts[i].xSpeed < 25){
+                    prts[i].xSpeed = 4;
+                }else if(prts[i].xSpeed < 36){
+                    prts[i].xSpeed = 5;
+                }else if(prts[i].xSpeed < 49){
+                    prts[i].xSpeed = 6;
+                }else if(prts[i].xSpeed < 64){
+                    prts[i].xSpeed = 7;
+                }else if(prts[i].xSpeed < 81){
+                    prts[i].xSpeed = 8;
+                }else if(prts[i].xSpeed < 100){
+                    prts[i].xSpeed = 9;
+                }else{
+                    prts[i].xSpeed = 10;
+                };
+
+                /* Randomly 50/50 chance of
+                 *  setting xSpeed to negative.
+                 */
+                if(rng() % 2){
+                    prts[i].xSpeed = -prts[i].xSpeed;
+                };
+
             };
 
             break;
@@ -633,8 +679,41 @@ void updateRainPrt(struct prt_t * p){
 
 void updateBirdPrt(struct prt_t * p){
 
+    /*p->x = 0;
+    p->y = 0;*/
+
     p->x += p->xSpeed;
     p->y += p->ySpeed;
+
+    /*Loop through 10 random particles.*/
+    /*int i = 0;
+    int randomPrt = 0;
+    while(i < 10){
+
+        randomPrt = (rng() % MAX_PRTS);
+*/
+        /* If the random particle is close enough
+         *  to p (100 pixels for PC).
+         */
+        /*if(((p->x - prts[randomPrt].x) * (p->x - prts[randomPrt].x)) + ((p->y - prts[randomPrt].y) * (p->y - prts[randomPrt].y)) < (prtW * 5 * prtW * 5)){
+
+        };*/
+/*
+        p->xSpeed = 0;
+        p->ySpeed = 0;
+
+        p->xSpeed = p->xSpeed + prts[randomPrt].x;
+        p->ySpeed = p->ySpeed + prts[randomPrt].y;
+
+        i++;
+    };
+
+    p->xSpeed = p->xSpeed / 10;
+    p->ySpeed = p->ySpeed / 10;*/
+
+    /*if(p = &prts[0]){
+        printf("x: %d y: %d\n", p->x, p->y);
+    };*/
 
     if(p->x < -prtW){
         p->x = p->x + out->w;
