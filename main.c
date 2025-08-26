@@ -164,6 +164,17 @@ int CB_NDS_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
 
 #endif
 
+/* This function is an integer square root
+ *  function.
+ */
+int sqrtInt(int n){
+    int i = 0;
+    while(((i + 1) * (i + 1)) < n){
+        i++;
+    };
+    return i;
+};
+
 //Linear congruential generator (almost)
 int rng(){
     static int n = 42444;
@@ -679,6 +690,84 @@ void updateRainPrt(struct prt_t * p){
 
 void updateBirdPrt(struct prt_t * p){
 
+    /* For this simulation to work, a point needs
+     *  to move towards the average position of
+     *  the other points.
+     *
+     * To move a point toward another, it's
+     *  xSpeed and ySpeed can be set to point
+     *  toward it.
+     *
+     * It would be best if the point only moves
+     *  toward points that are close to it.
+     *
+     * The maths below can be used for 10 random
+     *  particles.
+     *
+     * p1 is "p"
+     * p2 is "prts[randomPrt]"
+     * p3 is relative to p1 and it's x and y
+     *  values are equal to p2.xSpeed and
+     *  p2.ySpeed.
+     *
+     *
+     *     p2
+     *     | -__
+     *     |    --__ Hypotenuse    ____
+p2.y - p1.y|        --__        __/  |
+     *     |            --__  _/     | radius "r"
+     *     |__              p3__     | r = prtW
+     *     |  |             /   --__ |
+     *     |__|_____________|________p1
+     *
+     *             p2.x - p1.x
+     *
+     *
+     * We are trying to find p3. First find the
+     *  hypotenuse.
+     *
+     *                   a^2 + b^2             = c^2
+     *      (p2.y - p1.y)^2 + (p2.x - p1.x)^2  = Hypotenuse^2
+     * sqrt((p2.y - p1.y)^2 + (p2.x - p1.x)^2) = Hypotenuse
+     *
+     *
+     * Now the hypotenuse is found, it can be
+     *  used to find the ratio (or scaling
+     *  factor) between the hypotenuse and r.
+     *
+     * r * scale = hypotenuse
+     *     scale = hypotenuse / r
+     *
+     *
+     * Now the scaling factor is found,
+     *  (p2.x - p1.x) can be scaled down to find
+     *  p3.x, remember p3 is relative to p1.
+     *
+     * p3.x = (p2.x - p1.x) / scale
+     *
+     *
+     * Also p3.y can be found by scaling down
+     *  (p2.y - p1.y).
+     *
+     * p3.y = (p2.y - p1.y) / scale
+     *
+     *
+     * Putting it all together.
+     *
+     * p3.x = (p2.x - p1.x) / (hypotenuse / r)
+     *
+     * p3.x = (p2.x - p1.x) / (sqrt((p2.y - p1.y)^2 + (p2.x - p1.x)^2) / r)
+     *
+     * p3.x = (prts[randomPrt].x - p.x) / (sqrt((prts[randomPrt].y - p.y)^2 + (prts[randomPrt].x - p.x)^2) / r)
+     *
+     *
+     * p3.y = (p2.y - p1.y) / (hypotenuse / r)
+     *
+     * p3.y = (p2.y - p1.y) / (sqrt((p2.y - p1.y)^2 + (p2.x - p1.x)^2) / r)
+     *
+     * p3.y = (prts[randomPrt].y - p.y) / (sqrt((prts[randomPrt].y - p.y)^2 + (prts[randomPrt].x - p.x)^2) / r)
+     */
+
     /*p->x = 0;
     p->y = 0;*/
 
@@ -686,30 +775,38 @@ void updateBirdPrt(struct prt_t * p){
     p->y += p->ySpeed;
 
     /*Loop through 10 random particles.*/
-    /*int i = 0;
+    int i = 0;
     int randomPrt = 0;
-    while(i < 10){
+    while(i < 100){
 
-        randomPrt = (rng() % MAX_PRTS);
-*/
+        randomPrt = ((rng() + rng2()) % MAX_PRTS);
+
         /* If the random particle is close enough
          *  to p (100 pixels for PC).
          */
-        /*if(((p->x - prts[randomPrt].x) * (p->x - prts[randomPrt].x)) + ((p->y - prts[randomPrt].y) * (p->y - prts[randomPrt].y)) < (prtW * 5 * prtW * 5)){
+        if(((p->x - prts[randomPrt].x) * (p->x - prts[randomPrt].x)) + ((p->y - prts[randomPrt].y) * (p->y - prts[randomPrt].y)) < (prtW * 10 * prtW * 10)){
+            p->xSpeed = p->xSpeed / 2;
+            p->ySpeed = p->ySpeed / 2;
 
-        };*/
-/*
-        p->xSpeed = 0;
-        p->ySpeed = 0;
+            if(prts[randomPrt].xSpeed > 0){
+                p->xSpeed = p->xSpeed + ((prts[randomPrt].xSpeed + 1) / 2);
+            }else{
+                p->xSpeed = p->xSpeed + ((prts[randomPrt].xSpeed - 1) / 2);
+            };
 
-        p->xSpeed = p->xSpeed + prts[randomPrt].x;
-        p->ySpeed = p->ySpeed + prts[randomPrt].y;
+            if(prts[randomPrt].ySpeed > 0){
+                p->ySpeed = p->ySpeed + ((prts[randomPrt].ySpeed + 1) / 2);
+            }else{
+                p->ySpeed = p->ySpeed + ((prts[randomPrt].ySpeed - 1) / 2);
+            };
+        };
+
+
+        //p->xSpeed = ((prts[randomPrt].x - p->x) / (sqrt((prts[randomPrt].y - p->y)^2 + (prts[randomPrt].x - p->x)^2) / prtW)) / 10;
+        //p->ySpeed = ((prts[randomPrt].y - p->y) / (sqrt((prts[randomPrt].y - p->y)^2 + (prts[randomPrt].x - p->x)^2) / prtW)) / 10;
 
         i++;
     };
-
-    p->xSpeed = p->xSpeed / 10;
-    p->ySpeed = p->ySpeed / 10;*/
 
     /*if(p = &prts[0]){
         printf("x: %d y: %d\n", p->x, p->y);
@@ -779,32 +876,73 @@ void attractPrts(int x, int y, int moveSpeed){
             prts[i].y = y + ((y - prts[i].y) / (5000 / squaredDistance));
         };*/
 
-        /*If the particle is within 100 pixels of
-         * the x,y point: (100 pixels for PC)*/
-        if(squaredDistance < (prtW * 10 * prtW * 10)){
-            /*numPrtsAffected++;*/
+        if(gameType != GAME_TYPE_BIRD){
 
-            /*If the particle is to the left:*/
-            if(prts[i].x < x){
-                /*Move it right*/
-                prts[i].x = prts[i].x + moveSpeed;
+            /*If the particle is within 100 pixels of
+            * the x,y point: (100 pixels for PC)*/
+            if(squaredDistance < (prtW * 10 * prtW * 10)){
+                /*numPrtsAffected++;*/
 
-            /*If the particle is to the right:*/
-            }else if(prts[i].x > x){
-                /*Move it left*/
-                prts[i].x = prts[i].x - moveSpeed;
+                /*If the particle is to the left:*/
+                if(prts[i].x < x){
+                    /*Move it right*/
+                    prts[i].x = prts[i].x + moveSpeed;
+
+                /*If the particle is to the right:*/
+                }else if(prts[i].x > x){
+                    /*Move it left*/
+                    prts[i].x = prts[i].x - moveSpeed;
+                };
+
+                /*If the particle is above:*/
+                if(prts[i].y < y){
+                    /*Move it down*/
+                    prts[i].y = prts[i].y + moveSpeed;
+
+                /*If the particle is below:*/
+                }else if(prts[i].y > y){
+                    /*Move it up*/
+                    prts[i].y = prts[i].y - moveSpeed;
+                };
             };
 
-            /*If the particle is above:*/
-            if(prts[i].y < y){
-                /*Move it down*/
-                prts[i].y = prts[i].y + moveSpeed;
+        }else{
 
-            /*If the particle is below:*/
-            }else if(prts[i].y > y){
-                /*Move it up*/
-                prts[i].y = prts[i].y - moveSpeed;
+            /*If the particle is within 100 pixels of
+             * the x,y point: (100 pixels for PC)*/
+            if(squaredDistance < (prtW * 10 * prtW * 10)){
+                /*numPrtsAffected++;*/
+
+                /*If the particle is to the left:*/
+                if(prts[i].x < x){
+                    /*Move it right*/
+                    prts[i].xSpeed = moveSpeed;
+                    /*prts[i].x = prts[i].x + moveSpeed;*/
+
+                    /*If the particle is to the right:*/
+                }else if(prts[i].x > x){
+                    /*Move it left*/
+
+                    prts[i].xSpeed = -moveSpeed;
+                    /*prts[i].x = prts[i].x - moveSpeed;*/
+                };
+
+                /*If the particle is above:*/
+                if(prts[i].y < y){
+                    /*Move it down*/
+
+                    prts[i].ySpeed = moveSpeed;
+                    /*prts[i].y = prts[i].y + moveSpeed;*/
+
+                    /*If the particle is below:*/
+                }else if(prts[i].y > y){
+                    /*Move it up*/
+
+                    prts[i].ySpeed = -moveSpeed;;
+                    /*prts[i].y = prts[i].y - moveSpeed;*/
+                };
             };
+
         };
 
         i++;
