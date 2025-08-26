@@ -169,6 +169,11 @@ int CB_NDS_FillRect(D_Surf * s, D_Rect * rect, D_uint32 col){
  */
 int sqrtInt(int n){
     int i = 0;
+
+    if(n == 1){
+        return 1;
+    };
+
     while(((i + 1) * (i + 1)) < n){
         i++;
     };
@@ -260,43 +265,9 @@ void setGameType(enum gameType_t nextType){
                 prts[i].ySpeed = (rng() % 21) - 10;
                 prts[i].xSpeed = (10 * 10) - (prts[i].ySpeed * prts[i].ySpeed);
 
-                /* The below if-else is just a
-                 *  hack square root.
-                 *
-                 * prts[i].xSpeed should always
-                 *  be positive and between 0 and
-                 *  100.
-                 */
-                if(prts[i].xSpeed <= 1){
-                    /* Don't do anything, 0 and 1
-                     *  are thair own square
-                     *  roots.
-                     */
-                };
-                if(prts[i].xSpeed < 4){
-                    /* Root 2 and 3 gets rounded
-                     *  to 1.
-                     */
-                    prts[i].xSpeed = 1;
-                }else if(prts[i].xSpeed < 9){
-                    prts[i].xSpeed = 2;
-                }else if(prts[i].xSpeed < 16){
-                    prts[i].xSpeed = 3;
-                }else if(prts[i].xSpeed < 25){
-                    prts[i].xSpeed = 4;
-                }else if(prts[i].xSpeed < 36){
-                    prts[i].xSpeed = 5;
-                }else if(prts[i].xSpeed < 49){
-                    prts[i].xSpeed = 6;
-                }else if(prts[i].xSpeed < 64){
-                    prts[i].xSpeed = 7;
-                }else if(prts[i].xSpeed < 81){
-                    prts[i].xSpeed = 8;
-                }else if(prts[i].xSpeed < 100){
-                    prts[i].xSpeed = 9;
-                }else{
-                    prts[i].xSpeed = 10;
-                };
+                prts[i].xSpeed = sqrtInt(prts[i].xSpeed);
+
+                /*printf("gen xSpeed %d\ngen ySpeed %d\n\n", prts[i].xSpeed, prts[i].ySpeed);*/
 
                 /* Randomly 50/50 chance of
                  *  setting xSpeed to negative.
@@ -690,7 +661,11 @@ void updateRainPrt(struct prt_t * p){
 
 void updateBirdPrt(struct prt_t * p){
 
-    /* For this simulation to work, a point needs
+    /* The massive comment below isn't actually
+     *  how this function works, but an idea of
+     *  how it could be reimplemented.
+     *
+     * For this simulation to work, a point needs
      *  to move towards the average position of
      *  the other points.
      *
@@ -799,6 +774,36 @@ p2.y - p1.y|        --__        __/  |
             }else{
                 p->ySpeed = p->ySpeed + ((prts[randomPrt].ySpeed - 1) / 2);
             };
+
+            /* "Normalise" the xSpeed and ySpeed
+             *  "vector" so it has a length of
+             *  prtW.
+             *
+             * What this really means is, make
+             *  sure xSpeed and ySpeed
+             *  approximatly add up to prtW.
+             *
+             * Scale up (multiply) xSpeed and
+             *  ySpeed by
+             * ((prtW) / sqrtInt((p->xSpeed * p->xSpeed) + (p->ySpeed * p->ySpeed))).
+             *
+             */
+            if(p->xSpeed != 0 && p->ySpeed != 0){
+                p->xSpeed = p->xSpeed * ((prtW) / sqrtInt((p->xSpeed * p->xSpeed) + (p->ySpeed * p->ySpeed)));
+                p->ySpeed = p->ySpeed * ((prtW) / sqrtInt((p->xSpeed * p->xSpeed) + (p->ySpeed * p->ySpeed)));
+            }else{
+                p->xSpeed = 0;
+                p->ySpeed = prtW;
+            };
+
+            if(p->ySpeed < 9){
+                p->ySpeed -= 2;
+            };
+
+            /*if(p == &p[0]){
+                printf("xSpeed %d\nySpeed %d\n\n", p->xSpeed, p->ySpeed);
+            };*/
+
         };
 
 
