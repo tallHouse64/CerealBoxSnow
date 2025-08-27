@@ -66,6 +66,7 @@ int introFrameCount = 0;
 int ndsMouseToggle = 1; /*0 for pull particles, 1 for push.*/
 D_Surf * font = D_NULL;
 D_Surf * drwslib = D_NULL;
+const int birdSpeed = 10;
 
 #ifdef NDS
 /*Make the snow 4 by 4 pixels on DS*/
@@ -264,8 +265,9 @@ void setGameType(enum gameType_t nextType){
                 prts[i].b = 22;
                 prts[i].a = 255;
 
-                prts[i].ySpeed = (rng() % 21) - 10;
-                prts[i].xSpeed = (10 * 10) - (prts[i].ySpeed * prts[i].ySpeed);
+
+                prts[i].ySpeed = (rng() % ((birdSpeed * 2) + 1)) - birdSpeed;
+                prts[i].xSpeed = (birdSpeed * birdSpeed) - (prts[i].ySpeed * prts[i].ySpeed);
 
                 prts[i].xSpeed = sqrtInt(prts[i].xSpeed);
 
@@ -292,8 +294,16 @@ void setGameType(enum gameType_t nextType){
                 prts[i].x = (rng() % out->w);
                 prts[i].y = (rng() % out->h);
 
-                prts[i].ySpeed = (rng() % 21) - 10;
-                prts[i].xSpeed = (10 * 10) - (prts[i].ySpeed * prts[i].ySpeed);
+
+#ifdef NDS
+                const int speed = 3;
+#else
+                const int speed = 10;
+#endif
+
+                prts[i].ySpeed = (rng() % ((speed * 2) + 1)) - speed;
+
+                prts[i].xSpeed = (speed * speed) - (prts[i].ySpeed * prts[i].ySpeed);
 
                 prts[i].xSpeed = sqrtInt(prts[i].xSpeed);
 
@@ -788,28 +798,43 @@ p2.y - p1.y|        --__        __/  |
          *  to p (100 pixels for PC).
          */
         if(((p->x - prts[randomPrt].x) * (p->x - prts[randomPrt].x)) + ((p->y - prts[randomPrt].y) * (p->y - prts[randomPrt].y)) < (prtW * 10 * prtW * 10)){
-            p->xSpeed = p->xSpeed / 2;
-            p->ySpeed = p->ySpeed / 2;
 
-            if(prts[randomPrt].xSpeed > 0){
-                p->xSpeed = p->xSpeed + ((prts[randomPrt].xSpeed + 1) / 2);
-            }else{
-                p->xSpeed = p->xSpeed + ((prts[randomPrt].xSpeed - 1) / 2);
+
+            /* Make sure that the random
+             *  particles xSpeed halves to at
+             *  least 1 or -1*/
+            if(prts[randomPrt].xSpeed >= 2 || prts[randomPrt].xSpeed <= -2){
+
+                p->xSpeed = p->xSpeed / 2;
+
+                if(prts[randomPrt].xSpeed > 0){
+                    p->xSpeed = p->xSpeed + ((prts[randomPrt].xSpeed + 1) / 2);
+                }else{
+                    p->xSpeed = p->xSpeed + ((prts[randomPrt].xSpeed - 1) / 2);
+                };
             };
 
-            if(prts[randomPrt].ySpeed > 0){
-                p->ySpeed = p->ySpeed + ((prts[randomPrt].ySpeed + 1) / 2);
-            }else{
-                p->ySpeed = p->ySpeed + ((prts[randomPrt].ySpeed - 1) / 2);
+            /* Make sure that the random
+             *  particles ySpeed halves to at
+             *  least 1 or -1*/
+            if(prts[randomPrt].ySpeed >= 2 || prts[randomPrt].ySpeed <= -2){
+
+                p->ySpeed = p->ySpeed / 2;
+
+                if(prts[randomPrt].ySpeed > 0){
+                    p->ySpeed = p->ySpeed + ((prts[randomPrt].ySpeed + 1) / 2);
+                }else{
+                    p->ySpeed = p->ySpeed + ((prts[randomPrt].ySpeed - 1) / 2);
+                };
             };
 
             /* "Normalise" the xSpeed and ySpeed
              *  "vector" so it has a length of
-             *  prtW.
+             *  birdSpeed.
              *
              * What this really means is, make
              *  sure xSpeed and ySpeed
-             *  approximatly add up to prtW.
+             *  approximatly add up to birdSpeed.
              *
              * Scale up (multiply) xSpeed and
              *  ySpeed by
@@ -817,15 +842,20 @@ p2.y - p1.y|        --__        __/  |
              *
              */
             if(p->xSpeed != 0 && p->ySpeed != 0){
-                p->xSpeed = p->xSpeed * ((prtW) / sqrtInt((p->xSpeed * p->xSpeed) + (p->ySpeed * p->ySpeed)));
-                p->ySpeed = p->ySpeed * ((prtW) / sqrtInt((p->xSpeed * p->xSpeed) + (p->ySpeed * p->ySpeed)));
+                p->xSpeed = p->xSpeed * ((birdSpeed) / sqrtInt((p->xSpeed * p->xSpeed) + (p->ySpeed * p->ySpeed)));
+                p->ySpeed = p->ySpeed * ((birdSpeed) / sqrtInt((p->xSpeed * p->xSpeed) + (p->ySpeed * p->ySpeed)));
             }else{
                 p->xSpeed = 0;
-                p->ySpeed = prtW;
+                p->ySpeed = birdSpeed;
             };
 
-            if(p->ySpeed < 9){
+            if(p->ySpeed < birdSpeed - 1){
+
+#ifdef NDS
+                p->ySpeed -= 4;
+#else
                 p->ySpeed -= 2;
+#endif
             };
 
             /*if(p == &p[0]){
