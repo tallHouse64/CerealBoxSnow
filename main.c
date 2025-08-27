@@ -48,6 +48,7 @@ struct prt_t{
     int x, y;
     int xSpeed, ySpeed;
     int r, g, b, a;
+    int fireflyFlashTimer;
 } prts[MAX_PRTS];
 
 D_Surf * out = D_NULL;
@@ -283,9 +284,9 @@ void setGameType(enum gameType_t nextType){
         case GAME_TYPE_FIREFLIES:
 
             for(int i = 0; i < MAX_PRTS; i++){
-                prts[i].r = 255;
-                prts[i].g = 220;
-                prts[i].b = 165;
+                prts[i].r = 20;
+                prts[i].g = 20;
+                prts[i].b = 20;
                 prts[i].a = 255;
 
                 prts[i].x = (rng() % out->w);
@@ -863,7 +864,27 @@ void updateFireflyPrt(struct prt_t * p){
     p->x += p->xSpeed;
     p->y += p->ySpeed;
 
+    /*The number to reset the timer to*/
+    const int timerReset = 150;
 
+    /* The chance that a particle flashes on any
+     *  frame (a 1 in chanceReset chance)*/
+    const int chanceReset = 50;
+
+    if((((rng2() % chanceReset) == 1))){
+        p->fireflyFlashTimer = timerReset;
+    };
+
+
+    if(p->fireflyFlashTimer > 0){
+        p->r = 255 / ((((timerReset + 1) - p->fireflyFlashTimer) / ((timerReset + 1) / 8)) + 1);
+        p->g = 220 / ((((timerReset + 1) - p->fireflyFlashTimer) / ((timerReset + 1) / 8)) + 1);
+        p->b = 165 / ((((timerReset + 1) - p->fireflyFlashTimer) / ((timerReset + 1) / 8)) + 1);
+    }else{
+        p->r = 20;
+        p->g = 20;
+        p->b = 20;
+    };
 
     if(p->x < -prtW){
         p->x = p->x + out->w;
@@ -875,6 +896,11 @@ void updateFireflyPrt(struct prt_t * p){
         p->y = p->y + out->h;
     }else if(p->y > out->h){
         p->y = p->y - out->h;
+    };
+
+    /*Count down the timer if it's not zero.*/
+    if(p->fireflyFlashTimer > 0){
+        p->fireflyFlashTimer -= 1;
     };
 
     return;
