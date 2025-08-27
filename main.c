@@ -33,6 +33,7 @@ enum gameType_t {
     GAME_TYPE_FIRE,
     GAME_TYPE_RAIN,
     GAME_TYPE_BIRD,
+    GAME_TYPE_FIREFLIES,
     NUM_GAME_TYPES
 } gameType = GAME_TYPE_SNOW;
 
@@ -278,6 +279,32 @@ void setGameType(enum gameType_t nextType){
 
             };
 
+            break;
+        case GAME_TYPE_FIREFLIES:
+
+            for(int i = 0; i < MAX_PRTS; i++){
+                prts[i].r = 255;
+                prts[i].g = 220;
+                prts[i].b = 165;
+                prts[i].a = 255;
+
+                prts[i].x = (rng() % out->w);
+                prts[i].y = (rng() % out->h);
+
+                prts[i].ySpeed = (rng() % 21) - 10;
+                prts[i].xSpeed = (10 * 10) - (prts[i].ySpeed * prts[i].ySpeed);
+
+                prts[i].xSpeed = sqrtInt(prts[i].xSpeed);
+
+                /*printf("gen xSpeed %d\ngen ySpeed %d\n\n", prts[i].xSpeed, prts[i].ySpeed);*/
+
+                /* Randomly 50/50 chance of
+                *  setting xSpeed to negative.
+                */
+                if(rng() % 2){
+                    prts[i].xSpeed = -prts[i].xSpeed;
+                };
+            };
             break;
     };
 
@@ -832,6 +859,27 @@ p2.y - p1.y|        --__        __/  |
     return;
 };
 
+void updateFireflyPrt(struct prt_t * p){
+    p->x += p->xSpeed;
+    p->y += p->ySpeed;
+
+
+
+    if(p->x < -prtW){
+        p->x = p->x + out->w;
+    }else if(p->x > out->w){
+        p->x = p->x - out->w;
+    };
+
+    if(p->y < -prtH){
+        p->y = p->y + out->h;
+    }else if(p->y > out->h){
+        p->y = p->y - out->h;
+    };
+
+    return;
+};
+
 int updatePhysics(){
     int i = 0;
     while(i < prtsInUse){
@@ -848,6 +896,9 @@ int updatePhysics(){
                 break;
             case GAME_TYPE_BIRD:
                 updateBirdPrt(&prts[i]);
+                break;
+            case GAME_TYPE_FIREFLIES:
+                updateFireflyPrt(&prts[i]);
                 break;
         };
 
