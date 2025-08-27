@@ -1109,6 +1109,8 @@ int main(int argc, char ** argv){
 
                 case D_MOUSEUP:
                     mouseDown = 0;
+                    mouse.x = e.mouse.x;
+                    mouse.y = e.mouse.y;
                     mouseReleased = 1;
                     framesSinceMouseEvent = 0;
                     mouseButton = D_NOBUTTON;
@@ -1116,6 +1118,8 @@ int main(int argc, char ** argv){
 
                 case D_MOUSEDOWN:
                     mouseDown = 1;
+                    mouse.x = e.mouse.x;
+                    mouse.y = e.mouse.y;
                     mousePressed = 1;
                     framesSinceMouseEvent = 0;
                     mouseButton = e.mouse.button;
