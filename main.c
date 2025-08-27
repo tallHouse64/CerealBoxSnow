@@ -901,7 +901,7 @@ void updateFireflyPrt(struct prt_t * p){
      *  frame (a 1 in chanceReset chance)*/
     const int chanceReset = 50;
 
-    if((((rng2() % chanceReset) == 1))){
+    if((((rng() % chanceReset) == 1))){
         p->fireflyFlashTimer = timerReset;
     };
 
